@@ -3,7 +3,7 @@ WebSocket Messaging Server using Node.js and:
 https://github.com/Worlize/WebSocket-Node/wiki/Documentation).
 =================================================
 
---->> Writing the package.json file: https://docs.npmjs.com/files/package.json
+
 
 Browser Support
 ---------------
