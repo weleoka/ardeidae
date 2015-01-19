@@ -54,6 +54,15 @@ function is_system_msg(userId, msg) {
   }
  }
 
+function isNotInArray(search, arr) {
+    var len = arr.length;
+    while( len-- ) {
+        if ( arr[len] == search ) {
+           return false;
+        }
+    }
+    return true;
+}
 
 
 /**
@@ -131,13 +140,15 @@ function acceptConnectionAsBroadcast(request) {
               );
               LogKeeper.saveRegularMessage( peerID, peerName, peerOrigin,  msg.message );
             }
-
             // Private messaging handler
             if ( msg.reciever ) {
               var reciever = msg.reciever;
               var privateMsg = MsgControl.preparePrivateEcho( peerName, msg.message );
-              // add the senders ID to reciever list to return correct echo.
-              reciever.push(peerID);
+              // If user not in reciever array, push.
+              console.log('PEER: ' + peerID + ' Array: ' + reciever);
+              if ( isNotInArray(peerID, reciever) ) {
+                reciever.push(peerID);
+              }
               Broadcaster.broadcastPeerPrivateInfo( privateMsg, reciever );
               LogKeeper.savePrivateMessage( peerID, peerName, peerOrigin,  msg.message, msg.reciever );
             }
