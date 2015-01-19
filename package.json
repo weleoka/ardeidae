@@ -1,0 +1,28 @@
+{
+  "name": "ardeidae",
+  "version": "1.0.0",
+  "description": "Messaging server supporting logging, and private messaging.",
+  "main": "index.js",
+  "directories": {
+    "example": "example",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weleoka/ardeidae.git"
+  },
+  "keywords": [
+    "messaging",
+    "server",
+    "websockets"
+  ],
+  "author": "Kai Weeks",
+  "license": "Creative Commons v4.0",
+  "bugs": {
+    "url": "https://github.com/weleoka/ardeidae/issues"
+  },
+  "homepage": "https://github.com/weleoka/ardeidae"
+}
