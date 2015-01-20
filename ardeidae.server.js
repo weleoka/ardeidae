@@ -113,9 +113,11 @@ function acceptConnectionAsBroadcast(request) {
   );
   var j;
   for ( j = 0; j < log.length; j++ ) {
-      connection.sendUTF(
-              JSON.stringify( log[j] )
-      );
+      if (log[j]) {
+        connection.sendUTF(
+                JSON.stringify( log[j] )
+        );
+      }
   }
 
 
@@ -123,13 +125,13 @@ function acceptConnectionAsBroadcast(request) {
 /*
  * Callback on message.
  */
-  connection.on('message', function(message) {
+  connection.on('message', function(incoming) {
         var msg,
               peerID = connection.broadcastId,
-              peerName = UsrControl.findNameByIndex(peerID),
+              peerName = UsrControl.findNameByIndex(peerID),  // get name from server.
               peerOrigin = connection.remoteAddress;
-        if (message.type === 'utf8') {
-            msg = JSON.parse(message.utf8Data);
+        if (incoming.type === 'utf8') {
+            msg = JSON.parse(incoming.utf8Data);
 
             // Regular messaging handler
             if ( !msg.reciever ) {
@@ -153,8 +155,8 @@ function acceptConnectionAsBroadcast(request) {
               LogKeeper.savePrivateMessage( peerID, peerName, peerOrigin,  msg.message, msg.reciever );
             }
         }
-        else if (message.type === 'binary') {
-            msg = message.binaryData;
+        else if (incoming.type === 'binary') {
+            msg = incoming.binaryData;
             console.log('Received Binary Message of ' + msg.length + ' bytes');
             LogKeeper.saveRegularMessage( peerID, peerName, peerOrigin,  msg );
             connection.sendBytes( msg );
