@@ -5,10 +5,13 @@ var port = 8120;
 var http = require('http');
 var WebSocketServer = require('websocket').server;
 
+
 var UsrControl = require('ardeidae').usrControl;
 var MsgControl = require('ardeidae').msgControl;
 var Broadcaster = require('ardeidae').broadcaster;
 var LogKeeper = require('ardeidae').logKeeper;
+var DbManager = require('ardeidae').dbManager;
+
 
 
 /**
@@ -65,13 +68,15 @@ function isNotInArray(search, arr) {
 }
 
 
-/**
- * Create objects and get started.
+
+
+
+ /**
+ *  Create a http server with a callback handling all requests
  */
- // Create a http server with a callback handling all requests
 var httpServer = http.createServer(function(request, response) {
   console.log((new Date()) + ' Received request for ' + request.url);
-  response.writeHead(200, {'Content-type': 'text/plain'});
+  response.writeHead(200, {'Content-length': Buffer.byteLength(), 'Content-type': 'text/plain'});
   response.end('Hello world. This is a node.js HTTP server. You can also use websocket.\n');
 });
 
@@ -80,16 +85,31 @@ httpServer.listen(port, function() {
   console.log((new Date()) + ' HTTP server is listening on port ' + port);
 });
 
-// Create an object for the websocket
-// https://github.com/Worlize/WebSocket-Node/wiki/Documentation
+
+
+ /**
+ *  Create an object for the websocket
+ * https://github.com/Worlize/WebSocket-Node/wiki/Documentation
+ *
+ */
 var wsServer = new WebSocketServer({  httpServer: httpServer,  autoAcceptConnections: false });
 
-// Start up all things Ardeidae.
+
+
+/**
+ *  Start up all things Ardeidae.
+ */
 var UsrControl = new UsrControl();
 var MsgControl = new MsgControl();
 var Broadcaster = new Broadcaster();
 var LogKeeper = new LogKeeper();
+var DbManager = new DbManager();
 
+
+DbManager.createTableifNotExists();
+DbManager.insertSystemPeer();
+DbManager.findSystemPeer(name);
+console.log(DbManager.numQueries + ' total queries.');
 
 
  /**
