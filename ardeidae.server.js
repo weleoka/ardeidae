@@ -1,5 +1,6 @@
 /*globals */
 var port = 8120;
+var ProtectedServer = true;
 
 // Require the modules we need
 var http = require('http');
@@ -13,6 +14,7 @@ var LogKeeper = require('ardeidae').logKeeper;
 var DbManager = require('ardeidae').dbManager;
 
 
+var LogedOn = false;
 
 /**
  * Function to test the origin of incoming connection.
@@ -28,6 +30,21 @@ var DbManager = require('ardeidae').dbManager;
 }
 
 
+
+/**
+ * Function to test password from user found in DB to arriving password.
+ */
+var logonAction = function (user, msg) {
+        if ( user[0].password ) {
+          console.log('TESTING TESTING TESTING TESTING TESTING: ' + user[0].password + ' vs ' + msg.password);
+          if ( user[0].password === msg.password ) {
+            console.log('MATCH FOUND!!!!! YOU ARE NOW LOGGED ON.');// LogedOn = true;
+            return true;
+          }
+        }
+        console.log('THERE APPEAR TO BE DISCREPENCIES in PASSWORDS.');
+        return false;
+};
 
 /**
  * Check if it's a system message and handle it accordingly.
@@ -106,10 +123,17 @@ var LogKeeper = new LogKeeper();
 var DbManager = new DbManager();
 
 
-DbManager.createTableifNotExists();
-DbManager.insertSystemPeer();
-DbManager.findSystemPeer(name);
-console.log(DbManager.numQueries + ' total queries.');
+//var name = 'John';
+// DbManager.createTableifNotExists();
+/*        var params = ['John',
+         'john@gmail.com',
+         'john',
+         '2015-01-16 10:00:23'];
+*/
+// DbManager.insertSystemPeer(params);
+//var userFound = DbManager.findSystemPeer(name);
+//console.log('USER FOUND: ' + userFound);
+
 
 
  /**
@@ -129,7 +153,7 @@ function acceptConnectionAsBroadcast(request) {
 
   // Welcome and send the new user the latest posts.
   connection.sendUTF(
-          MsgControl.prepareServerWelcomeMsg('---> Welcome to the Ardeidae server.')
+          MsgControl.prepareServerGeneralMsg('---> Welcome to the Ardeidae server.')
   );
   var j;
   for ( j = 0; j < log.length; j++ ) {
@@ -221,6 +245,7 @@ function acceptConnectionAsBroadcast(request) {
  */
 function acceptConnectionAsSystem(request) {
   var sysConnection = request.accept('system-protocol', request.origin);
+  LogedOn = false;
   // Account for the initial user created on the formation of broadcast connection.
   sysConnection.broadcastId = UsrControl.getArrayLength() -1;
    // Log the connection to server broadcasts array.
@@ -251,6 +276,10 @@ function acceptConnectionAsSystem(request) {
                 )
        );
      }
+     sysConnection.sendUTF(
+          MsgControl.prepareServerGeneralMsg('Error in username or password.')
+     );
+
   });
 
   // Callback when client closes the connection
@@ -268,6 +297,56 @@ function acceptConnectionAsSystem(request) {
 
 
 /**
+ * Accept connection under the login-protocol
+ *
+ */
+function acceptConnectionAsLogin(request) {
+  var pswdConnection = request.accept('login-protocol', request.origin);
+
+  console.log((new Date()) + ' LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
+
+  // Callback to handle each message from the client
+  pswdConnection.on('message', function(message) {
+     console.log('Recieved system login message: ' + message.utf8Data + '... passing to handler.');
+     var msg = JSON.parse(message.utf8Data);
+
+      if ( msg.lead === 'pswd' ) {
+           console.log('SYS:pswd recieved...');
+
+           DbManager.findSystemPeer();
+           var result = DbManager.executeSQL(msg.acronym, function(user) {
+              console.log('FOUND USER: ' + user[0].acronym);
+              return logonAction(user, msg);
+           });
+           if ( result ) {
+               LogedOn = true;
+           }
+           if ( !result ) {
+              pswdConnection.sendUTF(
+                   MsgControl.prepareServerGeneralMsg('Error in username or password.')
+              );
+           }
+
+
+
+      }
+  });
+
+  // Callback when client closes the connection
+  pswdConnection.on('close', function(reasonCode, description) {
+    console.log((new Date())
+                      + ' Peer ' + pswdConnection.remoteAddress
+                      + ' Broadcastid = ' + pswdConnection.broadcastId
+                      + ' disconnected. Because: ' + reasonCode
+                      + ' Description: ' + description);
+  });
+  return true;
+}
+
+
+
+
+/**
  *  Request handling route to different accept scenarios.
  *
  */
@@ -281,19 +360,44 @@ wsServer.on('request', function(request) {
     return;
   }
 
-  // Loop through protocols. Accept by highest order first.
-  for ( i = 0; i < request.requestedProtocols.length; i++ ) {
-    if( request.requestedProtocols[i] === 'broadcast-protocol' ) {
-      status = acceptConnectionAsBroadcast(request);
-    } else if( request.requestedProtocols[i] === 'system-protocol' ) {
-      status = acceptConnectionAsSystem(request);
+  if ( ProtectedServer ) {
+    // Loop through protocols. Accept by highest order first.
+    for ( i = 0; i < request.requestedProtocols.length; i++ ) {
+      if ( request.requestedProtocols[i] === 'login-protocol' ) {
+        console.log('Checking PASSWORD');
+        status = acceptConnectionAsLogin(request);
+      }
+      if ( LogedOn ) {
+        if ( request.requestedProtocols[i] === 'broadcast-protocol' ) {
+          console.log('PASSWORD OK, accept BROADCAST connection.');
+          status = acceptConnectionAsBroadcast(request);
+        }
+        if( request.requestedProtocols[i] === 'system-protocol' ) {
+          status = acceptConnectionAsSystem(request);
+        }
+      }
+    }
+  }
+  if ( !ProtectedServer ) {
+        // Loop through protocols. Accept by highest order first.
+    for ( i = 0; i < request.requestedProtocols.length; i++ ) {
+      if ( request.requestedProtocols[i] === 'broadcast-protocol' ) {
+        status = acceptConnectionAsBroadcast(request);
+      } else if( request.requestedProtocols[i] === 'system-protocol' ) {
+        status = acceptConnectionAsSystem(request);
+      }
     }
   }
 
   // Unsupported protocol.
-  if(!status) {
+  if(!status && !ProtectedServer) {
     // acceptConnectionAsSystem(request, null);
     console.log('Subprotocol not supported');
     request.reject(404, 'Subprotocol not supported');
+  }
+    if(!status && ProtectedServer) {
+    // acceptConnectionAsSystem(request, null);
+    console.log('Subprotocol not supported, or not logged on.');
+    request.reject(404, 'Subprotocol not supported or not logged on.');
   }
 });
