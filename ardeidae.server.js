@@ -14,8 +14,6 @@ var LogKeeper = require('ardeidae').logKeeper;
 var DbManager = require('ardeidae').dbManager;
 
 
-var LogedOn = false;
-
 /**
  * Function to test the origin of incoming connection.
  */
@@ -148,7 +146,7 @@ function acceptConnectionAsBroadcast(request) {
   connection.broadcastId = UsrControl.getArrayLength();
   // Log the connection to broadcast array.
   Broadcaster.addPeer(connection);
-  console.log((new Date()) + ' Broadcast connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
+  console.log((new Date()) + 'BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
   UsrControl.addNewUser( connection.broadcastId, request.origin );
 
   // Welcome and send the new user the latest posts.
@@ -245,12 +243,11 @@ function acceptConnectionAsBroadcast(request) {
  */
 function acceptConnectionAsSystem(request) {
   var sysConnection = request.accept('system-protocol', request.origin);
-  LogedOn = false;
   // Account for the initial user created on the formation of broadcast connection.
   sysConnection.broadcastId = UsrControl.getArrayLength() -1;
    // Log the connection to server broadcasts array.
   Broadcaster.addSystemPeer(sysConnection);
-  console.log((new Date()) + ' system connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
+  console.log((new Date()) + ' SYSTEM connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
 
   // Callback to handle each message from the client
   sysConnection.on('message', function(message) {
@@ -287,7 +284,7 @@ function acceptConnectionAsSystem(request) {
     console.log((new Date())
                       + ' Peer ' + sysConnection.remoteAddress
                       + ' Broadcastid = ' + sysConnection.broadcastId
-                      + ' disconnected. Because: ' + reasonCode
+                      + ' disconnected from SYSTEM. Because: ' + reasonCode
                       + ' Description: ' + description);
     Broadcaster.removeSystemPeer(sysConnection.broadcastId);
   });
@@ -303,7 +300,7 @@ function acceptConnectionAsSystem(request) {
 function acceptConnectionAsLogin(request) {
   var pswdConnection = request.accept('login-protocol', request.origin);
 
-  console.log((new Date()) + ' LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
+  console.log((new Date()) + 'LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
 
   // Callback to handle each message from the client
   pswdConnection.on('message', function(message) {
@@ -314,20 +311,22 @@ function acceptConnectionAsLogin(request) {
            console.log('SYS:pswd recieved...');
 
            DbManager.findSystemPeer();
-           var result = DbManager.executeSQL(msg.acronym, function(user) {
-              console.log('FOUND USER: ' + user[0].acronym);
-              return logonAction(user, msg);
+           DbManager.executeSQL(msg.acronym, function(user) {
+             console.log('FOUND USER: ' + user[0].acronym);
+             var result = logonAction(user, msg);
+             if ( result ) {
+                 pswdConnection.sendUTF(
+                     MsgControl.prepareServerLoginSuccessMsg()
+                 );
+                 pswdConnection.close();
+             }
+             if ( !result ) {
+                pswdConnection.sendUTF(
+                     MsgControl.prepareServerGeneralMsg('Error in username or password.')
+                );
+                pswdConnection.close();
+             }
            });
-           if ( result ) {
-               LogedOn = true;
-           }
-           if ( !result ) {
-              pswdConnection.sendUTF(
-                   MsgControl.prepareServerGeneralMsg('Error in username or password.')
-              );
-           }
-
-
 
       }
   });
@@ -337,7 +336,7 @@ function acceptConnectionAsLogin(request) {
     console.log((new Date())
                       + ' Peer ' + pswdConnection.remoteAddress
                       + ' Broadcastid = ' + pswdConnection.broadcastId
-                      + ' disconnected. Because: ' + reasonCode
+                      + ' disconnected from LOGIN. Because: ' + reasonCode
                       + ' Description: ' + description);
   });
   return true;
@@ -366,16 +365,13 @@ wsServer.on('request', function(request) {
       if ( request.requestedProtocols[i] === 'login-protocol' ) {
         console.log('Checking PASSWORD');
         status = acceptConnectionAsLogin(request);
-      }
-      if ( LogedOn ) {
-        if ( request.requestedProtocols[i] === 'broadcast-protocol' ) {
-          console.log('PASSWORD OK, accept BROADCAST connection.');
+      } if ( request.requestedProtocols[i] === 'broadcast-protocol' ) {
+          console.log('protocol OK, accept BROADCAST connection.');
           status = acceptConnectionAsBroadcast(request);
-        }
-        if( request.requestedProtocols[i] === 'system-protocol' ) {
+      } if ( request.requestedProtocols[i] === 'system-protocol' ) {
+          console.log('protocol OK, accept SYSTEM connection.');
           status = acceptConnectionAsSystem(request);
         }
-      }
     }
   }
   if ( !ProtectedServer ) {
