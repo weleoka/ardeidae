@@ -1,28 +1,55 @@
 /*globals */
-var port = 8120;
-var ProtectedServer = true;
 
 // Require the modules we need
 var http = require('http');
 var WebSocketServer = require('websocket').server;
 
-
+// Load the Ardeidae module components.
 var UsrControl = require('ardeidae').usrControl;
 var MsgControl = require('ardeidae').msgControl;
 var Broadcaster = require('ardeidae').broadcaster;
 var LogKeeper = require('ardeidae').logKeeper;
 var DbManager = require('ardeidae').dbManager;
+var Config = require('ardeidae').config;
+
+
+/**
+ * Read information from config file.
+ */
+var port = Config.port;
+// Check if default is protected or public mode.
+var ProtectedServer = Config.ProtectedServer;
+// Set the protocol for the server listening on broadcast and system connections.
+if ( ProtectedServer ) {
+  var broadcastProtocol = Config.protocol.broadcast_protected;
+  var systemProtocol = Config.protocol.system_protected;
+} else {
+  var broadcastProtocol = Config.protocol.broadcast;
+  var systemProtocol = Config.protocol.system;
+}
+var acceptedOrigins = Config.origins;
+
+/**
+ *  Start up all things Ardeidae.
+ */
+var UsrControl = new UsrControl();
+var MsgControl = new MsgControl();
+var Broadcaster = new Broadcaster();
+var LogKeeper = new LogKeeper();
+var DbManager = new DbManager(Config.dbDetails);
+
+
 
 
 /**
  * Function to test the origin of incoming connection.
  */
  function originIsAllowed(origin) {
-  if (origin === 'http://dbwebb.se'
-  	|| origin === 'http://localhost:8080'
-  	|| origin === 'http://192.168.1.36:8080'
-  	|| origin === 'http://www.student.bth.se') {
-    return true;
+  var i;
+  for ( i = 0; i < acceptedOrigins.length; i++) {
+    if ( origin === acceptedOrigins[i] ) {
+      return true;
+    }
   }
   return false;
 }
@@ -33,16 +60,18 @@ var DbManager = require('ardeidae').dbManager;
  * Function to test password from user found in DB to arriving password.
  */
 var logonAction = function (user, msg) {
-        if ( user[0].password ) {
-          console.log('TESTING TESTING TESTING TESTING TESTING: ' + user[0].password + ' vs ' + msg.password);
-          if ( user[0].password === msg.password ) {
-            console.log('MATCH FOUND!!!!! YOU ARE NOW LOGGED ON.');// LogedOn = true;
-            return true;
-          }
-        }
-        console.log('THERE APPEAR TO BE DISCREPENCIES in PASSWORDS.');
-        return false;
+  if ( user ) {
+    console.log('TESTING TESTING TESTING TESTING TESTING: ' + user[0].password + ' vs ' + msg.password);
+    if ( user[0].password === msg.password ) {
+      console.log('MATCH FOUND!!!!! YOU ARE NOW LOGGED ON.');// LogedOn = true;
+      return true;
+    }
+  }
+  console.log('PROBLEM FINDING USER OR VERIFYING PASSWORD.');
+  return false;
 };
+
+
 
 /**
  * Check if it's a system message and handle it accordingly.
@@ -73,16 +102,48 @@ function is_system_msg(userId, msg) {
  }
 
 function isNotInArray(search, arr) {
-    var len = arr.length;
-    while( len-- ) {
-        if ( arr[len] == search ) {
-           return false;
-        }
-    }
-    return true;
+  var len = arr.length;
+  while( len-- ) {
+      if ( arr[len] == search ) {
+         return false;
+      }
+  }
+  return true;
 }
 
 
+
+
+
+
+/**
+ * Handle the incoming CLI paramenters
+ */
+ var myArgs = process.argv.slice(2, 3);
+ console.log('myArgs: ', myArgs);
+
+ switch (myArgs[0]) {
+   case 'private':
+     console.log(myArgs[0], ': Starting server in private/protected mode.');
+     var ProtectedServer = true;
+     break;
+   case 'setup':
+     console.log(myArgs[0], ': Creating the database table.');
+     DbManager.createTableifNotExists();
+     DbManager.executeSQL();
+          //var name = 'John';
+/*        var params = ['John',
+         'john@gmail.com',
+         'john',
+         '2015-01-16 10:00:23'];
+*/
+// DbManager.insertSystemPeer(params);
+//var userFound = DbManager.findSystemPeer(name);
+//console.log('USER FOUND: ' + userFound);
+     break;
+   default:
+     console.log('Sorry, that is not a valid Ardeidae command flag, or no flag passed.');
+ }
 
 
 
@@ -110,36 +171,12 @@ httpServer.listen(port, function() {
 var wsServer = new WebSocketServer({  httpServer: httpServer,  autoAcceptConnections: false });
 
 
-
-/**
- *  Start up all things Ardeidae.
- */
-var UsrControl = new UsrControl();
-var MsgControl = new MsgControl();
-var Broadcaster = new Broadcaster();
-var LogKeeper = new LogKeeper();
-var DbManager = new DbManager();
-
-
-//var name = 'John';
-// DbManager.createTableifNotExists();
-/*        var params = ['John',
-         'john@gmail.com',
-         'john',
-         '2015-01-16 10:00:23'];
-*/
-// DbManager.insertSystemPeer(params);
-//var userFound = DbManager.findSystemPeer(name);
-//console.log('USER FOUND: ' + userFound);
-
-
-
  /**
  * Accept connection under the broadcast-protocol
  *
  */
 function acceptConnectionAsBroadcast(request) {
-  var connection = request.accept('broadcast-protocol', request.origin);
+  var connection = request.accept(broadcastProtocol, request.origin);
   // Get history from log before adding the new peer.
   var log = LogKeeper.retrieveRegularMessage(7);
   // Give current connection an ID based on length of user array.
@@ -242,7 +279,7 @@ function acceptConnectionAsBroadcast(request) {
  *
  */
 function acceptConnectionAsSystem(request) {
-  var sysConnection = request.accept('system-protocol', request.origin);
+  var sysConnection = request.accept(systemProtocol, request.origin);
   // Account for the initial user created on the formation of broadcast connection.
   sysConnection.broadcastId = UsrControl.getArrayLength() -1;
    // Log the connection to server broadcasts array.
@@ -299,7 +336,6 @@ function acceptConnectionAsSystem(request) {
  */
 function acceptConnectionAsLogin(request) {
   var pswdConnection = request.accept('login-protocol', request.origin);
-
   console.log((new Date()) + 'LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
 
   // Callback to handle each message from the client
@@ -312,15 +348,16 @@ function acceptConnectionAsLogin(request) {
 
            DbManager.findSystemPeer();
            DbManager.executeSQL(msg.acronym, function(user) {
-             console.log('FOUND USER: ' + user[0].acronym);
-             var result = logonAction(user, msg);
-             if ( result ) {
+
+             if ( user ) {
+                 console.log('FOUND USER: ' + user[0].acronym);
+             }
+             if ( logonAction(user, msg) ) {
                  pswdConnection.sendUTF(
-                     MsgControl.prepareServerLoginSuccessMsg()
+                     MsgControl.prepareServerLoginSuccessMsg(broadcastProtocol, systemProtocol)
                  );
                  pswdConnection.close();
-             }
-             if ( !result ) {
+             } else {
                 pswdConnection.sendUTF(
                      MsgControl.prepareServerGeneralMsg('Error in username or password.')
                 );
@@ -363,13 +400,13 @@ wsServer.on('request', function(request) {
     // Loop through protocols. Accept by highest order first.
     for ( i = 0; i < request.requestedProtocols.length; i++ ) {
       if ( request.requestedProtocols[i] === 'login-protocol' ) {
-        console.log('Checking PASSWORD');
-        status = acceptConnectionAsLogin(request);
-      } if ( request.requestedProtocols[i] === 'broadcast-protocol' ) {
-          console.log('protocol OK, accept BROADCAST connection.');
+          console.log('Checking PASSWORD');
+          status = acceptConnectionAsLogin(request);
+      } if ( request.requestedProtocols[i] === broadcastProtocol ) {
+          console.log('PROTECTED protocol OK, accept BROADCAST connection.');
           status = acceptConnectionAsBroadcast(request);
-      } if ( request.requestedProtocols[i] === 'system-protocol' ) {
-          console.log('protocol OK, accept SYSTEM connection.');
+      } if ( request.requestedProtocols[i] === systemProtocol ) {
+          console.log('PROTECTED protocol OK, accept SYSTEM connection.');
           status = acceptConnectionAsSystem(request);
         }
     }
@@ -378,20 +415,22 @@ wsServer.on('request', function(request) {
         // Loop through protocols. Accept by highest order first.
     for ( i = 0; i < request.requestedProtocols.length; i++ ) {
       if ( request.requestedProtocols[i] === 'broadcast-protocol' ) {
+        console.log('PUBLIC protocol OK, accept BROADCAST connection.');
         status = acceptConnectionAsBroadcast(request);
       } else if( request.requestedProtocols[i] === 'system-protocol' ) {
+        console.log('PUBLIC protocol OK, accept SYSTEM connection.');
         status = acceptConnectionAsSystem(request);
       }
     }
   }
 
   // Unsupported protocol.
-  if(!status && !ProtectedServer) {
+  if (!status && !ProtectedServer) {
     // acceptConnectionAsSystem(request, null);
     console.log('Subprotocol not supported');
     request.reject(404, 'Subprotocol not supported');
   }
-    if(!status && ProtectedServer) {
+  if (!status && ProtectedServer) {
     // acceptConnectionAsSystem(request, null);
     console.log('Subprotocol not supported, or not logged on.');
     request.reject(404, 'Subprotocol not supported or not logged on.');

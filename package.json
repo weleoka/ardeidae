@@ -19,6 +19,10 @@
     "server",
     "websockets"
   ],
+  "dependencies": {
+    "websocket": "1.0.3",
+    "mysql": "2.5.4"
+  },
   "author": "Kai Weeks",
   "license": "Creative Commons v4.0",
   "bugs": {
