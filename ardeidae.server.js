@@ -120,7 +120,7 @@ function isNotInArray(search, arr) {
  * Handle the incoming CLI paramenters
  */
  var myArgs = process.argv.slice(2, 3);
- console.log('myArgs: ', myArgs);
+ // console.log('myArgs: ', myArgs);
 
  switch (myArgs[0]) {
    case 'private':
@@ -142,7 +142,7 @@ function isNotInArray(search, arr) {
 //console.log('USER FOUND: ' + userFound);
      break;
    default:
-     console.log('Sorry, that is not a valid Ardeidae command flag, or no flag passed.');
+     console.log('Starting server without passing any flags, i.e. mode specified in config.js.');
  }
 
 
@@ -310,10 +310,6 @@ function acceptConnectionAsSystem(request) {
                 )
        );
      }
-     sysConnection.sendUTF(
-          MsgControl.prepareServerGeneralMsg('Error in username or password.')
-     );
-
   });
 
   // Callback when client closes the connection
@@ -378,7 +374,6 @@ function acceptConnectionAsLogin(request) {
   });
   return true;
 }
-
 
 
 
