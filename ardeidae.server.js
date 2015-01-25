@@ -1,4 +1,4 @@
-/*globals */
+/*globals  */
 
 // Require the modules we need
 var http = require('http');
@@ -111,7 +111,7 @@ function generateSystemProtocol () {
 /**
  * Function to test password from user found in DB to arriving password.
  */
-var logonAction = function (user, msg) {
+var logonAction = function (user, msg, callback) {
     console.log('TESTING TESTING TESTING TESTING TESTING: ' + user[0].password + ' vs ' + msg.password);
     // Verifying a hash
     password (msg.password).verifyAgainst(user[0].password, function(error, verified) {
@@ -119,10 +119,10 @@ var logonAction = function (user, msg) {
         throw new Error('Something went wrong in the password check!');
       } if (!verified) {
         console.log('PROBLEM FINDING USER OR VERIFYING PASSWORD.');
-        return false;
+        callback(false);
       } if (verified) {
         console.log('MATCH FOUND!!!!! YOU ARE NOW LOGGED ON.');
-        return true;
+        callback(true);
       }
     });
 };
@@ -223,8 +223,8 @@ httpServer.listen(port, function() {
  */
 var wsServer = new WebSocketServer({  httpServer: httpServer,  autoAcceptConnections: false });
 // Generate the protocols for websocket and wsSystem
-var systemProtocol = generateSystemProtocol ();
-var broadcastProtocol = generateBroadcastProtocol ();
+var SystemProtocol = generateSystemProtocol ();
+var BroadcastProtocol = generateBroadcastProtocol ();
 
 
 
@@ -233,7 +233,7 @@ var broadcastProtocol = generateBroadcastProtocol ();
  * ====================================================
  */
 function acceptConnectionAsBroadcast(request) {
-  var connection = request.accept(broadcastProtocol, request.origin);
+  var connection = request.accept(BroadcastProtocol, request.origin);
   // Get history from log before adding the new peer.
   var log = LogKeeper.retrieveRegularMessage(7);
   // Give current connection an ID based on length of user array.
@@ -336,7 +336,7 @@ function acceptConnectionAsBroadcast(request) {
  *
  */
 function acceptConnectionAsSystem(request) {
-  var sysConnection = request.accept(systemProtocol, request.origin);
+  var sysConnection = request.accept(SystemProtocol, request.origin);
   // Account for the initial user created on the formation of broadcast connection.
   sysConnection.broadcastId = UsrControl.getArrayLength() -1;
    // Log the connection to server broadcasts array.
@@ -402,17 +402,12 @@ function acceptConnectionAsLogin(request) {
            DbManager.findSystemPeer();
            DbManager.executeSQL(msg.acronym, function(user) {
                if ( user.length > 0 ) {     // user !== null && typeof user === 'object' ) {
-                   if ( logonAction (user, msg) ) {
-                       console.log('Sending msg: PROTOCOLS are: ' + broadcastProtocol + ' and ' + systemProtocol);
+                   logonAction (user, msg, function (checkResult) {
+                       console.log('Sending msg: PROTOCOLS are: ' + BroadcastProtocol + ' and ' + SystemProtocol);
                        pswdConnection.sendUTF (
-                           MsgControl.prepareServerLoginSuccessMsg (broadcastProtocol, systemProtocol)
+                           MsgControl.prepareServerLoginMsg ( checkResult, BroadcastProtocol, SystemProtocol )
                        );
-                       
-                   } else {
-                      pswdConnection.sendUTF (
-                           MsgControl.prepareServerGeneralMsg ('Invalid password.')
-                      );
-                   }
+                   });
                } else {
                    pswdConnection.sendUTF (
                       MsgControl.prepareServerGeneralMsg ('Invalid username.')
@@ -456,10 +451,10 @@ wsServer.on('request', function(request) {
       if ( request.requestedProtocols[i] === 'login-protocol' ) {
           console.log('Checking PASSWORD');
           status = acceptConnectionAsLogin(request);
-      } if ( request.requestedProtocols[i] === broadcastProtocol ) {
+      } if ( request.requestedProtocols[i] === BroadcastProtocol ) {
           console.log('PROTECTED protocol OK, accept BROADCAST connection.');
           status = acceptConnectionAsBroadcast(request);
-      } if ( request.requestedProtocols[i] === systemProtocol ) {
+      } if ( request.requestedProtocols[i] === SystemProtocol ) {
           console.log('PROTECTED protocol OK, accept SYSTEM connection.');
           status = acceptConnectionAsSystem(request);
         }
