@@ -21,7 +21,8 @@
   ],
   "dependencies": {
     "websocket": "1.0.3",
-    "mysql": "2.5.4"
+    "mysql": "2.5.4",
+    "password-hash-and-salt": "0.1.2"
   },
   "author": "Kai Weeks",
   "license": "Creative Commons v4.0",

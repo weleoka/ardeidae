@@ -4,13 +4,16 @@
 var http = require('http');
 var WebSocketServer = require('websocket').server;
 
-// Load the Ardeidae module components.
+// Load the Ardeidae module components and dependencies.
 var UsrControl = require('ardeidae').usrControl;
 var MsgControl = require('ardeidae').msgControl;
 var Broadcaster = require('ardeidae').broadcaster;
 var LogKeeper = require('ardeidae').logKeeper;
 var DbManager = require('ardeidae').dbManager;
 var Config = require('ardeidae').config;
+
+var password = require('password-hash-and-salt');
+
 
 
 /**
@@ -19,15 +22,10 @@ var Config = require('ardeidae').config;
 var port = Config.port;
 // Check if default is protected or public mode.
 var ProtectedServer = Config.ProtectedServer;
-// Set the protocol for the server listening on broadcast and system connections.
-if ( ProtectedServer ) {
-  var broadcastProtocol = Config.protocol.broadcast_protected;
-  var systemProtocol = Config.protocol.system_protected;
-} else {
-  var broadcastProtocol = Config.protocol.broadcast;
-  var systemProtocol = Config.protocol.system;
-}
+// Get list of accepted origins
 var acceptedOrigins = Config.origins;
+
+
 
 /**
  *  Start up all things Ardeidae.
@@ -37,7 +35,6 @@ var MsgControl = new MsgControl();
 var Broadcaster = new Broadcaster();
 var LogKeeper = new LogKeeper();
 var DbManager = new DbManager(Config.dbDetails);
-
 
 
 
@@ -53,23 +50,6 @@ var DbManager = new DbManager(Config.dbDetails);
   }
   return false;
 }
-
-
-
-/**
- * Function to test password from user found in DB to arriving password.
- */
-var logonAction = function (user, msg) {
-  if ( user ) {
-    console.log('TESTING TESTING TESTING TESTING TESTING: ' + user[0].password + ' vs ' + msg.password);
-    if ( user[0].password === msg.password ) {
-      console.log('MATCH FOUND!!!!! YOU ARE NOW LOGGED ON.');// LogedOn = true;
-      return true;
-    }
-  }
-  console.log('PROBLEM FINDING USER OR VERIFYING PASSWORD.');
-  return false;
-};
 
 
 
@@ -112,8 +92,72 @@ function isNotInArray(search, arr) {
 }
 
 
+// Set the protocol for the server listening on broadcast connections.
+function generateBroadcastProtocol () {
+  if ( ProtectedServer ) {
+    return Config.protocol.broadcast_protected;
+  }
+    return Config.protocol.broadcast;
+}
+// Set the protocol for the server listening system connections.
+function generateSystemProtocol () {
+  if ( ProtectedServer ) {
+    return Config.protocol.system_protected;
+  }
+    return Config.protocol.system;
+}
 
 
+/**
+ * Function to test password from user found in DB to arriving password.
+ */
+var logonAction = function (user, msg) {
+    console.log('TESTING TESTING TESTING TESTING TESTING: ' + user[0].password + ' vs ' + msg.password);
+    // Verifying a hash
+    password (msg.password).verifyAgainst(user[0].password, function(error, verified) {
+      if (error) {
+        throw new Error('Something went wrong in the password check!');
+      } if (!verified) {
+        console.log('PROBLEM FINDING USER OR VERIFYING PASSWORD.');
+        return false;
+      } if (verified) {
+        console.log('MATCH FOUND!!!!! YOU ARE NOW LOGGED ON.');
+        return true;
+      }
+    });
+};
+
+
+
+/**
+ * Functions to save new user to array and hash their password.
+ */
+function saveToDB(params) {
+   DbManager.insertSystemPeer();
+   if (params) {
+      DbManager.executeSQL(params);
+   }
+}
+
+function createHash (pswd) {
+  password(pswd).hash(function(error, hash) {
+    if (error) {
+      throw new Error('Something went wrong!');
+    }
+    var params = ['John',
+         'john@gmail.com',
+         hash,
+         '2015-01-16 10:00:23'];
+    saveToDB(params);
+  });
+}
+
+function saveNewUser (passkey) {
+  var hashedNready = createHash(passkey, function(result) {
+    return result;
+  });
+  saveToDB(hashedNready);
+}
 
 
 /**
@@ -128,16 +172,14 @@ function isNotInArray(search, arr) {
      var ProtectedServer = true;
      break;
    case 'setup':
-     console.log(myArgs[0], ': Creating the database table.');
+/*     console.log(myArgs[0], ': Creating the database table.');
      DbManager.createTableifNotExists();
      DbManager.executeSQL();
-          //var name = 'John';
-/*        var params = ['John',
-         'john@gmail.com',
-         'john',
-         '2015-01-16 10:00:23'];
 */
-// DbManager.insertSystemPeer(params);
+  // Store hash (incl. algorithm, iterations, and salt)
+  var passkey = 'john';
+  saveNewUser(passkey);
+
 //var userFound = DbManager.findSystemPeer(name);
 //console.log('USER FOUND: ' + userFound);
      break;
@@ -145,7 +187,18 @@ function isNotInArray(search, arr) {
      console.log('Starting server without passing any flags, i.e. mode specified in config.js.');
  }
 
+/*var https = require('https');
+var fs = require('fs');
 
+var options = {
+  key: fs.readFileSync(Config.SSLkey),
+  cert: fs.readFileSync(Config.SSLcert)
+};
+
+https.createServer(options, function (req, res) {
+  res.writeHead(200);
+  res.end("hello world\n");
+}).listen(8000);*/
 
  /**
  *  Create a http server with a callback handling all requests
@@ -169,11 +222,15 @@ httpServer.listen(port, function() {
  *
  */
 var wsServer = new WebSocketServer({  httpServer: httpServer,  autoAcceptConnections: false });
+// Generate the protocols for websocket and wsSystem
+var systemProtocol = generateSystemProtocol ();
+var broadcastProtocol = generateBroadcastProtocol ();
+
 
 
  /**
  * Accept connection under the broadcast-protocol
- *
+ * ====================================================
  */
 function acceptConnectionAsBroadcast(request) {
   var connection = request.accept(broadcastProtocol, request.origin);
@@ -344,23 +401,25 @@ function acceptConnectionAsLogin(request) {
 
            DbManager.findSystemPeer();
            DbManager.executeSQL(msg.acronym, function(user) {
-
-             if ( user ) {
-                 console.log('FOUND USER: ' + user[0].acronym);
-             }
-             if ( logonAction(user, msg) ) {
-                 pswdConnection.sendUTF(
-                     MsgControl.prepareServerLoginSuccessMsg(broadcastProtocol, systemProtocol)
-                 );
-                 pswdConnection.close();
-             } else {
-                pswdConnection.sendUTF(
-                     MsgControl.prepareServerGeneralMsg('Error in username or password.')
-                );
-                pswdConnection.close();
-             }
+               if ( user.length > 0 ) {     // user !== null && typeof user === 'object' ) {
+                   if ( logonAction (user, msg) ) {
+                       console.log('Sending msg: PROTOCOLS are: ' + broadcastProtocol + ' and ' + systemProtocol);
+                       pswdConnection.sendUTF (
+                           MsgControl.prepareServerLoginSuccessMsg (broadcastProtocol, systemProtocol)
+                       );
+                       
+                   } else {
+                      pswdConnection.sendUTF (
+                           MsgControl.prepareServerGeneralMsg ('Invalid password.')
+                      );
+                   }
+               } else {
+                   pswdConnection.sendUTF (
+                      MsgControl.prepareServerGeneralMsg ('Invalid username.')
+                   );
+               }
            });
-
+           // pswdConnection.close();
       }
   });
 

@@ -50,7 +50,7 @@ This is will establish the database table for the server to use, if it does not 
 The table will have the correct attributes for Ardeidae to work with.
 
 
-
+The server will run as a HTTPS server if you have a certificate.
 
 For more complete documentation, see the [Documentation Wiki](Not online as yet).
 
@@ -60,14 +60,12 @@ Installation
 
 I strongly recommend the custom Ardeidae client:
 $ git clone https://www.github.com/weleoka/ardeidae.client.git
-Then in the ardeidae folder, i.e. in your project root:
 
-    $ npm install ardeidae
-
-The server depends on some other modules. Websocket and the mysql drivers for node.js.
+The server depends on some other modules. Websocket and the mysql drivers for node.js. As well as a module for encrypting passwords.
 
     $ npm install websocket@1.0.3
     $ npm install mysql@2.5.4
+    $ npm install password-hash-and-salt@0.1.2
 
 
 
@@ -92,6 +90,7 @@ Also:
 Known Issues/Missing Features:
 ------------------------------
 General:
+
 * Needs a function to notify peers when user is typing a message.
 * Concider the format for saving message log. JSON or Object?
 * Needs multiple chattrooms... curently, one instance of the server equals one chattroom.
@@ -102,28 +101,7 @@ Protected server:
 * Very low security on passwords and protocol keys. We need some encryption and key-generation here!
 * The connecting peer, if not connecting with a password can't tell if the server is down or running in protected mode. Some sort of user feedback when connecting with public protocol to protected server is needed.
 
-
-
-Usage Examples
-==============
-
-
-
-Server Example
---------------
-
-
-
-
-Client Example
---------------
-
-
-
-
-Resources
----------
-
+* Purge the null values from userArray before sending stats message to clients.
 
 
 
