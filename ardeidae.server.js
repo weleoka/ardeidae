@@ -102,7 +102,7 @@ function is_system_msg(userId, msg) {
  * Function to test password from user found in DB to arriving password.
  */
 var logonAction = function (user, msg, callback) {
-    password (msg.password).verifyAgainst(user[0].password, function(error, verified) {
+    password (msg.password).verifyAgainst(user.password, function(error, verified) {
       if (error) {
         throw new Error('Something went wrong in the password check!\n');
       } if (!verified) {
@@ -120,17 +120,21 @@ var logonAction = function (user, msg, callback) {
 /**
  * Function to save new user to DB and hash their password.
  */
-function saveNewUser (details) {
+function saveNewUser (details, callback) {
   DbManager.insertSystemPeer();
-  var created = Math.round((new Date()).getTime() / 1000);
+  var created = new Date().getTime();
   if ( details.hasOwnProperty('password') ) {
-    password(details.password).hash(function(error, hash) {
-      if (error) {
-        throw new Error('Something went wrong with hashing password!');
-      }
-      var params = [ details.name, details.email, hash, created ];
-      DbManager.executeSQL(params);
-    });
+      password(details.password).hash(function(error, hash) {
+          if (error) {
+            throw new Error('Something went wrong with hashing password!');
+          }
+          var params = [ details.name, details.email, hash, created ];
+          DbManager.executeSQL(params, function (results) {
+              if ( typeof callback === 'function' ) {
+                callback(results);
+              }
+          });
+      });
   }
 }
 
@@ -364,7 +368,7 @@ function acceptConnectionAsSystem(request) {
  * Login-protocol
  * ====================================================
  */
-function acceptConnectionAsLogin(request) {
+function acceptConnectionAsLogin (request) {
   console.log('Protocol OK, accepting LOGON connection...');
   var pswdConnection = request.accept('login-protocol', request.origin);
   console.log( getUtcNow ('time') + ': LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
@@ -375,9 +379,9 @@ function acceptConnectionAsLogin(request) {
      if ( ProtectedServer ) {
         if ( msg.lead === 'pswd' ) {
              DbManager.findSystemPeer();
-             DbManager.executeSQL(msg.acronym, function ( user ) {
-                 if ( user.length > 0 ) {     // user !== null && typeof user === 'object' ) {
-                     logonAction (user, msg, function ( checkResult ) {
+             DbManager.executeSQL(msg.acronym, function (user) {
+                 if ( user.hasOwnProperty('acronym') ) {
+                     logonAction (user, msg, function (checkResult) {
                          pswdConnection.sendUTF (
                              MsgControl.prepareServerLoginMsg ( checkResult, BroadcastProtocol, SystemProtocol )
                          );
@@ -389,7 +393,18 @@ function acceptConnectionAsLogin(request) {
                 }
              });
         } else if ( msg.lead === 'rgstr' ) {
-            saveNewUser ( msg.newUserDetails );
+            saveNewUser ( msg.newUserDetails, function (results) {
+                if ( results.hasOwnProperty('affectedRows') ) {
+                  pswdConnection.sendUTF (
+                          MsgControl.prepareServerGeneralMsg ('User "' + msg.newUserDetails.name + '" registered. Welcome!')
+                  );
+                } else {
+                  pswdConnection.sendUTF (
+                          MsgControl.prepareServerGeneralMsg ('User "' + msg.newUserDetails.name + '" already exists... use a different username.')
+                  );
+                }
+
+            });
         } else {
             pswdConnection.sendUTF (
                     MsgControl.prepareServerGeneralMsg ('Protected server, need password.')
@@ -454,7 +469,7 @@ wsServer.on('request', function(request) {
 process.on("exit", function() { console.log("Goodbye"); });
 // Uncaught exceptions generate events, if any handlers are registered.
 // Otherwise, the exception just makes Node print an error and exit.
-process.on("uncaughtException", function(e) { console.log(Exception, e); });
+//process.on("uncaughtException", function(e) { console.log(Exception, e); });
 
 // POSIX signals like SIGINT, SIGHUP and SIGTERM generate events
 // process.on("SIGINT", function() { console.log("Ignored Ctrl-C"); });

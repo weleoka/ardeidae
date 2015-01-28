@@ -10,7 +10,7 @@ Version 1.1.2
 - Unique protocol keys for server protected mode.
 - Effective feedback on various logon scenarios.
 - Purge of null values from array of JSON before transmit.
-- Support for creating new user. Client needs soem work still, but functional.
+- Support for creating new user. Client needs some work still, but functional.
 
 Version 1.1.1
 -------------
