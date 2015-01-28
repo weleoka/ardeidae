@@ -1,10 +1,11 @@
-/*globals  */
+/*globals Exception */
 
-// Require the modules we need
+// Require the module dependencies.
 var http = require('http');
 var WebSocketServer = require('websocket').server;
+var password = require('password-hash-and-salt');
 
-// Load the Ardeidae module components and dependencies.
+// Load the Ardeidae module components.
 var UsrControl = require('ardeidae').usrControl;
 var MsgControl = require('ardeidae').msgControl;
 var Broadcaster = require('ardeidae').broadcaster;
@@ -12,29 +13,10 @@ var LogKeeper = require('ardeidae').logKeeper;
 var DbManager = require('ardeidae').dbManager;
 var Config = require('ardeidae').config;
 
-var password = require('password-hash-and-salt');
-
-
-
-/**
- * Read information from config file.
- */
+// Read information from config file.
 var port = Config.port;
-// Check if default is protected or public mode.
 var ProtectedServer = Config.ProtectedServer;
-// Get list of accepted origins
 var acceptedOrigins = Config.origins;
-
-
-
-/**
- *  Start up all things Ardeidae.
- */
-var UsrControl = new UsrControl();
-var MsgControl = new MsgControl();
-var Broadcaster = new Broadcaster();
-var LogKeeper = new LogKeeper();
-var DbManager = new DbManager(Config.dbDetails);
 
 
 
@@ -49,6 +31,39 @@ var DbManager = new DbManager(Config.dbDetails);
     }
   }
   return false;
+}
+
+
+
+/**
+ * Function to test if item can be found in array.
+ */
+function isNotInArray(search, arr) {
+  var len = arr.length;
+  while( len-- ) {
+      if ( arr[len] == search ) {
+         return false;
+      }
+  }
+  return true;
+}
+
+
+
+/**
+ * Return current local time in readable format..
+ */
+function getUtcNow ( format ) {
+  var now = new Date(),
+        now_utc;
+  if ( format === 'full' ) {
+    now_utc = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),  now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
+    return now_utc;
+  }
+  if ( format === 'time' ) {
+    now_utc = new Date(now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
+    return now_utc;
+  }
 }
 
 
@@ -81,47 +96,20 @@ function is_system_msg(userId, msg) {
   }
  }
 
-function isNotInArray(search, arr) {
-  var len = arr.length;
-  while( len-- ) {
-      if ( arr[len] == search ) {
-         return false;
-      }
-  }
-  return true;
-}
-
-
-// Set the protocol for the server listening on broadcast connections.
-function generateBroadcastProtocol () {
-  if ( ProtectedServer ) {
-    return Config.protocol.broadcast_protected;
-  }
-    return Config.protocol.broadcast;
-}
-// Set the protocol for the server listening system connections.
-function generateSystemProtocol () {
-  if ( ProtectedServer ) {
-    return Config.protocol.system_protected;
-  }
-    return Config.protocol.system;
-}
 
 
 /**
  * Function to test password from user found in DB to arriving password.
  */
 var logonAction = function (user, msg, callback) {
-    console.log('TESTING TESTING TESTING TESTING TESTING: ' + user[0].password + ' vs ' + msg.password);
-    // Verifying a hash
     password (msg.password).verifyAgainst(user[0].password, function(error, verified) {
       if (error) {
-        throw new Error('Something went wrong in the password check!');
+        throw new Error('Something went wrong in the password check!\n');
       } if (!verified) {
-        console.log('PROBLEM FINDING USER OR VERIFYING PASSWORD.');
+        console.log('INVALID PASSWORD.\n');
         callback(false);
       } if (verified) {
-        console.log('MATCH FOUND!!!!! YOU ARE NOW LOGGED ON.');
+        console.log('PASSWORD CORRECT... sending protocol keys.\n');
         callback(true);
       }
     });
@@ -130,34 +118,26 @@ var logonAction = function (user, msg, callback) {
 
 
 /**
- * Functions to save new user to array and hash their password.
+ * Function to save new user to DB and hash their password.
  */
-function saveToDB(params) {
-   DbManager.insertSystemPeer();
-   if (params) {
+function saveNewUser (details) {
+  DbManager.insertSystemPeer();
+  var created = Math.round((new Date()).getTime() / 1000);
+  if ( details.hasOwnProperty('password') ) {
+    password(details.password).hash(function(error, hash) {
+      if (error) {
+        throw new Error('Something went wrong with hashing password!');
+      }
+      var params = [ details.name, details.email, hash, created ];
       DbManager.executeSQL(params);
-   }
+    });
+  }
 }
 
-function createHash (pswd) {
-  password(pswd).hash(function(error, hash) {
-    if (error) {
-      throw new Error('Something went wrong!');
-    }
-    var params = ['John',
-         'john@gmail.com',
-         hash,
-         '2015-01-16 10:00:23'];
-    saveToDB(params);
-  });
-}
 
-function saveNewUser (passkey) {
-  var hashedNready = createHash(passkey, function(result) {
-    return result;
-  });
-  saveToDB(hashedNready);
-}
+// DbManager be required by the incoming CLI parameters so it start here.
+var DbManager = new DbManager(Config.dbDetails);
+
 
 
 /**
@@ -165,28 +145,52 @@ function saveNewUser (passkey) {
  */
  var myArgs = process.argv.slice(2, 3);
  // console.log('myArgs: ', myArgs);
-
  switch (myArgs[0]) {
    case 'private':
-     console.log(myArgs[0], ': Starting server in private/protected mode.');
+     console.log( '\nArdeidae server in private/protected mode.\n============================================');
      var ProtectedServer = true;
      break;
    case 'setup':
-/*     console.log(myArgs[0], ': Creating the database table.');
+/*      console.log('Saving new user: ');
+      var newUserDetails = [];
+      newUserDetails.name = 'John';
+      newUserDetails.email = 'johnyBuoy@gmail.com';
+      newUserDetails.password = 'john';
+      newUserDetails.created = '2015-01-26 14:15:23';
+      saveNewUser(newUserDetails);*/
+     console.log(myArgs[0], ': Creating the database table.');
      DbManager.createTableifNotExists();
      DbManager.executeSQL();
-*/
-  // Store hash (incl. algorithm, iterations, and salt)
-  var passkey = 'john';
-  saveNewUser(passkey);
-
-//var userFound = DbManager.findSystemPeer(name);
-//console.log('USER FOUND: ' + userFound);
      break;
    default:
-     console.log('Starting server without passing any flags, i.e. mode specified in config.js.');
+     console.log( '\nArdeidae server in default mode.\n====================================');
  }
 
+
+
+/**
+ *  Start up all things Ardeidae.
+ */
+var UsrControl = new UsrControl();
+var MsgControl = new MsgControl();
+var Broadcaster = new Broadcaster(Config.protocol, ProtectedServer);
+var LogKeeper = new LogKeeper();
+// var DbManager = new DbManager(Config.dbDetails);
+
+
+ /**
+  *  Create a http server with a callback handling all requests
+  */
+var httpServer = http.createServer(function(request, response) {
+  console.log( getUtcNow ('time')  + ': Received request for ' + request.url);
+  response.writeHead(200, {'Content-length': Buffer.byteLength(), 'Content-type': 'text/plain'});
+  response.end('Hello world. This is a node.js HTTP server. You can also use websocket.\n');
+});
+
+// Setup the http-server to listen to a port
+httpServer.listen(port, function() {
+  console.log( getUtcNow ('full') + ': HTTP server is listening on port ' + port + '\n');
+});
 /*var https = require('https');
 var fs = require('fs');
 
@@ -200,39 +204,26 @@ https.createServer(options, function (req, res) {
   res.end("hello world\n");
 }).listen(8000);*/
 
- /**
- *  Create a http server with a callback handling all requests
- */
-var httpServer = http.createServer(function(request, response) {
-  console.log((new Date()) + ' Received request for ' + request.url);
-  response.writeHead(200, {'Content-length': Buffer.byteLength(), 'Content-type': 'text/plain'});
-  response.end('Hello world. This is a node.js HTTP server. You can also use websocket.\n');
-});
-
-// Setup the http-server to listen to a port
-httpServer.listen(port, function() {
-  console.log((new Date()) + ' HTTP server is listening on port ' + port);
-});
-
 
 
  /**
- *  Create an object for the websocket
- * https://github.com/Worlize/WebSocket-Node/wiki/Documentation
- *
- */
+  *  Create an object for the websocket
+  * https://github.com/Worlize/WebSocket-Node/wiki/Documentation
+  *
+  */
 var wsServer = new WebSocketServer({  httpServer: httpServer,  autoAcceptConnections: false });
 // Generate the protocols for websocket and wsSystem
-var SystemProtocol = generateSystemProtocol ();
-var BroadcastProtocol = generateBroadcastProtocol ();
+var BroadcastProtocol = Broadcaster.setBroadcastProtocol ();
+var SystemProtocol = Broadcaster.setSystemProtocol ();
 
 
 
  /**
- * Accept connection under the broadcast-protocol
+ * Broadcast-protocol
  * ====================================================
  */
 function acceptConnectionAsBroadcast(request) {
+  console.log('Protocol OK, accept BROADCAST connection...');
   var connection = request.accept(BroadcastProtocol, request.origin);
   // Get history from log before adding the new peer.
   var log = LogKeeper.retrieveRegularMessage(7);
@@ -240,10 +231,10 @@ function acceptConnectionAsBroadcast(request) {
   connection.broadcastId = UsrControl.getArrayLength();
   // Log the connection to broadcast array.
   Broadcaster.addPeer(connection);
-  console.log((new Date()) + 'BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
+  console.log( getUtcNow ('time') + ': BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
   UsrControl.addNewUser( connection.broadcastId, request.origin );
 
-  // Welcome and send the new user the latest posts.
+// Say hi, and transmit historical messages to new user.
   connection.sendUTF(
           MsgControl.prepareServerGeneralMsg('---> Welcome to the Ardeidae server.')
   );
@@ -256,11 +247,6 @@ function acceptConnectionAsBroadcast(request) {
       }
   }
 
-
-
-/*
- * Callback on message.
- */
   connection.on('message', function(incoming) {
         var msg,
               peerID = connection.broadcastId,
@@ -299,13 +285,9 @@ function acceptConnectionAsBroadcast(request) {
         }
   });
 
-/*
- * Callback when connection closes. // reasonCode, description
- */
   connection.on('close', function() {
     Broadcaster.removePeer(connection.broadcastId);
 
-      // Get userName, prepare departure info message, then broadcast.
     Broadcaster.broadcastServerRegularInfo(
             MsgControl.prepareServerInfoMsg(
                   UsrControl.findNameByIndex(
@@ -317,7 +299,6 @@ function acceptConnectionAsBroadcast(request) {
 
     UsrControl.removeByIndex (connection.broadcastId);
 
-     // Get userList and userCount and prepare stats message, then broadcast.
     var userList = UsrControl.getStats();
     var userCount = UsrControl.getUserCount();
     Broadcaster.broadcastServerSystemInfo(
@@ -332,47 +313,43 @@ function acceptConnectionAsBroadcast(request) {
 
 
 /**
- * Accept connection under the system-protocol
- *
+ * System-protocol
+ * ====================================================
  */
 function acceptConnectionAsSystem(request) {
+  console.log('Protocol OK, accept SYSTEM connection...');
   var sysConnection = request.accept(SystemProtocol, request.origin);
   // Account for the initial user created on the formation of broadcast connection.
   sysConnection.broadcastId = UsrControl.getArrayLength() -1;
    // Log the connection to server broadcasts array.
   Broadcaster.addSystemPeer(sysConnection);
-  console.log((new Date()) + ' SYSTEM connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
+  console.log( getUtcNow ('time') + ': SYSTEM connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
 
-  // Callback to handle each message from the client
   sysConnection.on('message', function(message) {
      console.log('Recieved system message: ' + message.utf8Data + '... passing to handler.');
      var msg = JSON.parse(message.utf8Data);
      if ( is_system_msg( sysConnection.broadcastId, msg ) ) {
-        // Get name from message, prepare info message and broadcast.
-       var contents = msg.name + ' has entered the zone.';
-       Broadcaster.broadcastServerRegularInfo (
-               MsgControl.prepareServerInfoMsg (
-                       contents
-               )
-       );
-       // Save to log <-- Think about JSON parsing
-       // LogKeeper.saveRegularMessage('server', 'server', 'server', contents);
+          // Get name from message, prepare info message and broadcast.
+         var contents = msg.name + ' has entered the zone.';
+         Broadcaster.broadcastServerRegularInfo (
+                 MsgControl.prepareServerInfoMsg (
+                         contents
+                 )
+         );
 
-        // Get userList and userCount and prepare stats message, then transmit.
-       var userList = UsrControl.getStats();
-       var userCount = UsrControl.getUserCount();
-       Broadcaster.broadcastServerSystemInfo (
-                MsgControl.prepareStatsReport (
-                        userList, userCount
-                )
-       );
+         var userList = UsrControl.getStats();
+         var userCount = UsrControl.getUserCount();
+         Broadcaster.broadcastServerSystemInfo (
+                  MsgControl.prepareStatsReport (
+                          userList, userCount
+                  )
+         );
      }
   });
 
-  // Callback when client closes the connection
   sysConnection.on('close', function(reasonCode, description) {
-    console.log((new Date())
-                      + ' Peer ' + sysConnection.remoteAddress
+    console.log( getUtcNow ('time')
+                      + ': Peer ' + sysConnection.remoteAddress
                       + ' Broadcastid = ' + sysConnection.broadcastId
                       + ' disconnected from SYSTEM. Because: ' + reasonCode
                       + ' Description: ' + description);
@@ -384,44 +361,51 @@ function acceptConnectionAsSystem(request) {
 
 
 /**
- * Accept connection under the login-protocol
- *
+ * Login-protocol
+ * ====================================================
  */
 function acceptConnectionAsLogin(request) {
+  console.log('Protocol OK, accepting LOGON connection...');
   var pswdConnection = request.accept('login-protocol', request.origin);
-  console.log((new Date()) + 'LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
+  console.log( getUtcNow ('time') + ': LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
 
-  // Callback to handle each message from the client
   pswdConnection.on('message', function(message) {
      console.log('Recieved system login message: ' + message.utf8Data + '... passing to handler.');
      var msg = JSON.parse(message.utf8Data);
-
-      if ( msg.lead === 'pswd' ) {
-           console.log('SYS:pswd recieved...');
-
-           DbManager.findSystemPeer();
-           DbManager.executeSQL(msg.acronym, function(user) {
-               if ( user.length > 0 ) {     // user !== null && typeof user === 'object' ) {
-                   logonAction (user, msg, function (checkResult) {
-                       console.log('Sending msg: PROTOCOLS are: ' + BroadcastProtocol + ' and ' + SystemProtocol);
-                       pswdConnection.sendUTF (
-                           MsgControl.prepareServerLoginMsg ( checkResult, BroadcastProtocol, SystemProtocol )
-                       );
-                   });
-               } else {
-                   pswdConnection.sendUTF (
-                      MsgControl.prepareServerGeneralMsg ('Invalid username.')
-                   );
-               }
-           });
-           // pswdConnection.close();
-      }
+     if ( ProtectedServer ) {
+        if ( msg.lead === 'pswd' ) {
+             DbManager.findSystemPeer();
+             DbManager.executeSQL(msg.acronym, function ( user ) {
+                 if ( user.length > 0 ) {     // user !== null && typeof user === 'object' ) {
+                     logonAction (user, msg, function ( checkResult ) {
+                         pswdConnection.sendUTF (
+                             MsgControl.prepareServerLoginMsg ( checkResult, BroadcastProtocol, SystemProtocol )
+                         );
+                     });
+                 } else {
+                    pswdConnection.sendUTF (
+                            MsgControl.prepareServerGeneralMsg ('Invalid username.')
+                    );
+                }
+             });
+        } else if ( msg.lead === 'rgstr' ) {
+            saveNewUser ( msg.newUserDetails );
+        } else {
+            pswdConnection.sendUTF (
+                    MsgControl.prepareServerGeneralMsg ('Protected server, need password.')
+            );
+        }
+     } else {
+        pswdConnection.sendUTF (
+                MsgControl.prepareServerGeneralMsg ('Open server, no need for password..')
+        );
+     }
+      // pswdConnection.close();
   });
 
-  // Callback when client closes the connection
   pswdConnection.on('close', function(reasonCode, description) {
-    console.log((new Date())
-                      + ' Peer ' + pswdConnection.remoteAddress
+    console.log( getUtcNow ('time')
+                      + ': Peer ' + pswdConnection.remoteAddress
                       + ' Broadcastid = ' + pswdConnection.broadcastId
                       + ' disconnected from LOGIN. Because: ' + reasonCode
                       + ' Description: ' + description);
@@ -432,56 +416,46 @@ function acceptConnectionAsLogin(request) {
 
 
 /**
- *  Request handling route to different accept scenarios.
- *
+ *  Request handling for incoming connections.
+ * ====================================================
  */
 wsServer.on('request', function(request) {
   var i, status = null;
 
-  if (!originIsAllowed(request.origin)) {
-    // Make sure we only accept requests from an allowed origin
+// Make sure we only accept requests from an allowed origin
+  if ( !originIsAllowed(request.origin) ) {
     request.reject();
-    console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+    console.log( getUtcNow ('time')  + ': Connection from origin ' + request.origin + ' rejected.');
     return;
   }
 
-  if ( ProtectedServer ) {
-    // Loop through protocols. Accept by highest order first.
-    for ( i = 0; i < request.requestedProtocols.length; i++ ) {
-      if ( request.requestedProtocols[i] === 'login-protocol' ) {
-          console.log('Checking PASSWORD');
-          status = acceptConnectionAsLogin(request);
-      } if ( request.requestedProtocols[i] === BroadcastProtocol ) {
-          console.log('PROTECTED protocol OK, accept BROADCAST connection.');
-          status = acceptConnectionAsBroadcast(request);
-      } if ( request.requestedProtocols[i] === SystemProtocol ) {
-          console.log('PROTECTED protocol OK, accept SYSTEM connection.');
-          status = acceptConnectionAsSystem(request);
-        }
-    }
-  }
-  if ( !ProtectedServer ) {
-        // Loop through protocols. Accept by highest order first.
-    for ( i = 0; i < request.requestedProtocols.length; i++ ) {
-      if ( request.requestedProtocols[i] === 'broadcast-protocol' ) {
-        console.log('PUBLIC protocol OK, accept BROADCAST connection.');
+  for ( i = 0; i < request.requestedProtocols.length; i++ ) {
+    console.log('\nREQUEST RECIEVED, testing protocols: "' + BroadcastProtocol + '"" and "' + SystemProtocol + '" on server, Vs. "' + request.requestedProtocols[i] + '" from client.' );
+    if ( request.requestedProtocols[i] === 'login-protocol' ) {
+        status = acceptConnectionAsLogin(request);
+    } if ( request.requestedProtocols[i] === BroadcastProtocol ) {
         status = acceptConnectionAsBroadcast(request);
-      } else if( request.requestedProtocols[i] === 'system-protocol' ) {
-        console.log('PUBLIC protocol OK, accept SYSTEM connection.');
+        BroadcastProtocol = Broadcaster.setBroadcastProtocol ();  // make new unique protocol key.
+    } if ( request.requestedProtocols[i] === SystemProtocol ) {
         status = acceptConnectionAsSystem(request);
+        SystemProtocol = Broadcaster.setSystemProtocol (); // make new unique protocol key.
       }
-    }
   }
 
   // Unsupported protocol.
-  if (!status && !ProtectedServer) {
-    // acceptConnectionAsSystem(request, null);
+  if (!status) {
     console.log('Subprotocol not supported');
     request.reject(404, 'Subprotocol not supported');
   }
-  if (!status && ProtectedServer) {
-    // acceptConnectionAsSystem(request, null);
-    console.log('Subprotocol not supported, or not logged on.');
-    request.reject(404, 'Subprotocol not supported or not logged on.');
-  }
 });
+
+
+// The "exit" event is sent before Node exits.
+process.on("exit", function() { console.log("Goodbye"); });
+// Uncaught exceptions generate events, if any handlers are registered.
+// Otherwise, the exception just makes Node print an error and exit.
+process.on("uncaughtException", function(e) { console.log(Exception, e); });
+
+// POSIX signals like SIGINT, SIGHUP and SIGTERM generate events
+// process.on("SIGINT", function() { console.log("Ignored Ctrl-C"); });
+

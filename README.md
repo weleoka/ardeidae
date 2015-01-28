@@ -8,7 +8,8 @@ Versions
 v1.0.0
 v1.0.1
 v1.1.0
-v1.1.1 (current)
+v1.1.1
+v1.1.2 (current)
 
 
 Requirements
@@ -72,6 +73,7 @@ The server depends on some other modules. Websocket and the mysql drivers for no
 
 Current Features:
 -----------------
+General functinality:
 * Message logging
 * Private messaging to single or multiple peers but remaining in public room.
 * Filter messages with htmlEntities
@@ -80,29 +82,34 @@ Current Features:
 	- includes recent messages.
 * Notifies when each user joins or leaves.
 * Keeps track of total users online, and total since service launch.
+* If running in open mode notifies peers trying to connect with password that they don't need it.
 
-Also:
+General server specs and options:
+* Displays output on host machine terminal about operations.
 
+Also about the protected server mode:
 * The server has the option of being open or password protected.
 * MySQL Database integration to maintain a list of registered users.
+* Password encryption support.
+* Random protocol name generation to prevent unauthorised access.
 
 
 
 Known Issues/Missing Features:
 ------------------------------
-General:
-
+General functionality:
 * Needs a function to notify peers when user is typing a message.
-* Concider the format for saving message log. JSON or Object?
+* Consider the format for saving message log. JSON or Object?
 * Needs multiple chattrooms... curently, one instance of the server equals one chattroom.
-
 * Backup message log to database table (currently stored in array), but at intervals - to free up system memory and provide backup during service down time.
+* Stop users sending blank messages.
 
-Protected server:
-* Very low security on passwords and protocol keys. We need some encryption and key-generation here!
+General server specs and options:
+* Needs a mode switching capability for verbose mode & debug mode.
+
+Also about the protected server mode:
 * The connecting peer, if not connecting with a password can't tell if the server is down or running in protected mode. Some sort of user feedback when connecting with public protocol to protected server is needed.
 
-* Purge the null values from userArray before sending stats message to clients.
 
 
 
@@ -110,7 +117,9 @@ Protected server:
 Credits
 ==============
 
-* Ardeidae is a one man project. However, many thanks to the developers of Node, Websocket and MySQL for node.
+Ardeidae is a one man project. However, many thanks to the developers of Node, Websocket and MySQL for node.
+
+
 
 
 
