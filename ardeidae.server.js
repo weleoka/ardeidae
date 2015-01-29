@@ -13,10 +13,8 @@ var LogKeeper = require('ardeidae').logKeeper;
 var DbManager = require('ardeidae').dbManager;
 var Config = require('ardeidae').config;
 
-// Read information from config file.
-var port = Config.port;
+// Read information from config file... mostly done within functions to limit globals.
 var ProtectedServer = Config.ProtectedServer;
-var acceptedOrigins = Config.origins;
 
 
 
@@ -24,6 +22,7 @@ var acceptedOrigins = Config.origins;
  * Function to test the origin of incoming connection.
  */
  function originIsAllowed(origin) {
+  var acceptedOrigins = Config.origins;
   var i;
   for ( i = 0; i < acceptedOrigins.length; i++) {
     if ( origin === acceptedOrigins[i] ) {
@@ -122,7 +121,7 @@ var logonAction = function (user, msg, callback) {
  */
 function saveNewUser (details, callback) {
   DbManager.insertSystemPeer();
-  var created = new Date().getTime();
+  var created = Date.now();
   if ( details.hasOwnProperty('password') ) {
       password(details.password).hash(function(error, hash) {
           if (error) {
@@ -145,7 +144,7 @@ var DbManager = new DbManager(Config.dbDetails);
 
 
 /**
- * Handle the incoming CLI paramenters
+ *  Handle the incoming CLI paramenters
  */
  var myArgs = process.argv.slice(2, 3);
  // console.log('myArgs: ', myArgs);
@@ -182,19 +181,65 @@ var LogKeeper = new LogKeeper();
 // var DbManager = new DbManager(Config.dbDetails);
 
 
+
  /**
-  *  Create a http server with a callback handling all requests
+  *  HTTP Server.
   */
-var httpServer = http.createServer(function(request, response) {
+function handleHttpRequest(request, response) {
   console.log( getUtcNow ('time')  + ': Received request for ' + request.url);
-  response.writeHead(200, {'Content-length': Buffer.byteLength(), 'Content-type': 'text/plain'});
-  response.end('Hello world. This is a node.js HTTP server. You can also use websocket.\n');
+  // console.log(request.headers);
+  console.log(getUtcNow ('time') + ': ' + request.headers.origin + ' used the request method: ' + request.method);
+
+  var origin = (request.headers.origin || '*');
+
+  if (request.method === 'OPTIONS'){
+
+    response.writeHead( '204', 'No Content', {
+      'access-control-allow-origin': origin,
+      'access-control-allow-methods': 'GET, POST',
+      'access-control-allow-headers': 'content-type, accept',
+      'access-control-max-age': 10, // Seconds.
+      'content-length': 0
+    });
+
+    return( response.end() );
+  }
+
+  var requestBodyBuffer = [];
+
+  request.on( 'data', function( chunk ){
+      requestBodyBuffer.push( chunk );
+  });
+
+  request.on('end', function(){
+      var requestBody = requestBodyBuffer.join( '' );
+
+  // Create a response body to echo back the incoming request.
+      var responseBody = ( 'Thank You, this is what you sent with Ajax: ' + requestBody );
+
+      response.writeHead( '200', 'OK', {
+        'access-control-allow-origin': origin,
+        'content-type': 'text/plain',
+        'content-length': responseBody.length
+      });
+
+  // Close out the response.
+      console.log('Data recieved is: ' + requestBody);
+      return( response.end( responseBody ) );
+  });
+}
+
+var httpServer = http.createServer(handleHttpRequest);
+
+httpServer.listen(Config.port, function() {
+  console.log( getUtcNow ('full') + ': HTTP server is listening on port ' + Config.port + '\n');
 });
 
-// Setup the http-server to listen to a port
-httpServer.listen(port, function() {
-  console.log( getUtcNow ('full') + ': HTTP server is listening on port ' + port + '\n');
-});
+
+
+/**
+ *  HTTPS Server.
+ */
 /*var https = require('https');
 var fs = require('fs');
 
@@ -211,7 +256,7 @@ https.createServer(options, function (req, res) {
 
 
  /**
-  *  Create an object for the websocket
+  *  Create an object for the websocket. (Incoming WS requests handled at bottom of this file).
   * https://github.com/Worlize/WebSocket-Node/wiki/Documentation
   *
   */
