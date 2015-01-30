@@ -6,6 +6,7 @@ var WebSocketServer = require('websocket').server;
 var password = require('password-hash-and-salt');
 
 // Load the Ardeidae module components.
+var HttpControl = require('ardeidae').httpControl;
 var UsrControl = require('ardeidae').usrControl;
 var MsgControl = require('ardeidae').msgControl;
 var Broadcaster = require('ardeidae').broadcaster;
@@ -142,7 +143,6 @@ function saveNewUser (details, callback) {
 var DbManager = new DbManager(Config.dbDetails);
 
 
-
 /**
  *  Handle the incoming CLI paramenters
  */
@@ -154,16 +154,9 @@ var DbManager = new DbManager(Config.dbDetails);
      var ProtectedServer = true;
      break;
    case 'setup':
-/*      console.log('Saving new user: ');
-      var newUserDetails = [];
-      newUserDetails.name = 'John';
-      newUserDetails.email = 'johnyBuoy@gmail.com';
-      newUserDetails.password = 'john';
-      newUserDetails.created = '2015-01-26 14:15:23';
-      saveNewUser(newUserDetails);*/
      console.log(myArgs[0], ': Creating the database table.');
      DbManager.createTableifNotExists();
-     DbManager.executeSQL();
+     DbManager.executeSQL([], function () { process.exit(0); });
      break;
    default:
      console.log( '\nArdeidae server in default mode.\n====================================');
@@ -178,81 +171,24 @@ var UsrControl = new UsrControl();
 var MsgControl = new MsgControl();
 var Broadcaster = new Broadcaster(Config.protocol, ProtectedServer);
 var LogKeeper = new LogKeeper();
-// var DbManager = new DbManager(Config.dbDetails);
-
-
-
- /**
-  *  HTTP Server.
-  */
-function handleHttpRequest(request, response) {
-  console.log( getUtcNow ('time')  + ': Received request for ' + request.url);
-  // console.log(request.headers);
-  console.log(getUtcNow ('time') + ': ' + request.headers.origin + ' used the request method: ' + request.method);
-
-  var origin = (request.headers.origin || '*');
-
-  if (request.method === 'OPTIONS'){
-
-    response.writeHead( '204', 'No Content', {
-      'access-control-allow-origin': origin,
-      'access-control-allow-methods': 'GET, POST',
-      'access-control-allow-headers': 'content-type, accept',
-      'access-control-max-age': 10, // Seconds.
-      'content-length': 0
-    });
-
-    return( response.end() );
-  }
-
-  var requestBodyBuffer = [];
-
-  request.on( 'data', function( chunk ){
-      requestBodyBuffer.push( chunk );
-  });
-
-  request.on('end', function(){
-      var requestBody = requestBodyBuffer.join( '' );
-
-  // Create a response body to echo back the incoming request.
-      var responseBody = ( 'Thank You, this is what you sent with Ajax: ' + requestBody );
-
-      response.writeHead( '200', 'OK', {
-        'access-control-allow-origin': origin,
-        'content-type': 'text/plain',
-        'content-length': responseBody.length
-      });
-
-  // Close out the response.
-      console.log('Data recieved is: ' + requestBody);
-      return( response.end( responseBody ) );
-  });
-}
-
-var httpServer = http.createServer(handleHttpRequest);
-
-httpServer.listen(Config.port, function() {
-  console.log( getUtcNow ('full') + ': HTTP server is listening on port ' + Config.port + '\n');
-});
+var HttpControl = new HttpControl(Config.serverCallsign, ProtectedServer);
+// var DbManager = new DbManager(Config.dbDetails); // DbManager is started before handling CLI parameters.
 
 
 
 /**
- *  HTTPS Server.
+ *  HTTP Server
  */
-/*var https = require('https');
-var fs = require('fs');
+var httpServer = http.createServer(function (request, response) {
+  HttpControl.setOnlineUsers( UsrControl.getUserCount() );
+  HttpControl.setHistoricalUsers( UsrControl.getArrayLength() );
+  var serverStats = HttpControl.getStats();
+  HttpControl.handleHttpRequest(request, response, serverStats);
+});
 
-var options = {
-  key: fs.readFileSync(Config.SSLkey),
-  cert: fs.readFileSync(Config.SSLcert)
-};
-
-https.createServer(options, function (req, res) {
-  res.writeHead(200);
-  res.end("hello world\n");
-}).listen(8000);*/
-
+httpServer.listen(Config.port, function() {
+  console.log( getUtcNow ('full') + ': HTTP server is listening on port ' + Config.port );
+});
 
 
  /**
