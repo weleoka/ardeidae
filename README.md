@@ -41,6 +41,24 @@ The Ardeidae server.
 Documentation
 =============
 
+
+Installation
+------------
+
+I strongly recommend the custom Ardeidae client for testing the server:
+$ git clone https://www.github.com/weleoka/ardeidae.client.git
+
+The server depends on some other modules. Websocket and the mysql drivers for node.js. As well as a module for encrypting passwords. These versions tested with Ardeidae January 2015
+
+    $ npm install websocket@1.0.3
+    $ npm install mysql@2.5.4
+    $ npm install password-hash-and-salt@0.1.2
+
+
+
+Usage
+------------
+
 There is a server config file where deployment defaults can be specified, as well as important aspects such as SQL credentials, SSL certificates for HTTPS and more.
 
 
@@ -65,20 +83,22 @@ The server will run as a HTTPS server if you have a certificate.
 
 All variables are specified within the config file, that is the place to edit server defaults, as well as paths to SSL certificates, SQL database credentials etc.
 
+
+
+Config-file
+------------
+* port: specify the port which the http server is listening on.
+* serverCallsign: here you are free to call your server whatever you wish.
+* SSL certificates, make sure the directory is correct.
+* Set the protected mode of the server.
+	Please note that the server is by default not using HTTPS/SSL, and protected mode simply means that users require a registered user and password before they can use the server.
+* dbDetails. This is important in order for the server to have registered users. Future versions of Ardeidae will use the same credentials for creating effective history logs of messages and storing in DB.
+* The protocols are the default protocols that the server listens for. If in protected mode the server will generate random protocols which the client needs to have before being allowed to connect.
+* Origins is very important. The server will only accept incoming websocket connections if the client is at the specified origins.
+
+
 For more complete documentation, see the [Documentation Wiki (not yet online)](Not online as yet).
 
-
-Installation
-------------
-
-I strongly recommend the custom Ardeidae client for testing the server:
-$ git clone https://www.github.com/weleoka/ardeidae.client.git
-
-The server depends on some other modules. Websocket and the mysql drivers for node.js. As well as a module for encrypting passwords. These versions tested with Ardeidae January 2015
-
-    $ npm install websocket@1.0.3
-    $ npm install mysql@2.5.4
-    $ npm install password-hash-and-salt@0.1.2
 
 
 
@@ -126,7 +146,7 @@ General server specs and options:
 * Needs a mode switching capability for verbose mode & debug mode.
 
 Also about the protected server mode:
-* issues waiting...
+* The servers protocols are not generated as they should be. They are simply made using a Math.random() function... and random is not random when it comes to computers.
 
 
 

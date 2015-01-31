@@ -140,7 +140,7 @@ function saveNewUser (details, callback) {
 
 
 // DbManager be required by the incoming CLI parameters so it start here.
-var DbManager = new DbManager(Config.dbDetails);
+var DbManager = new DbManager(Config.dbDetails, Config.dbDetailsTable);
 
 
 /**
@@ -377,7 +377,7 @@ function acceptConnectionAsLogin (request) {
             saveNewUser ( msg.newUserDetails, function (results) {
                 if ( results.hasOwnProperty('affectedRows') ) {
                   pswdConnection.sendUTF (
-                          MsgControl.prepareServerGeneralMsg ('User "' + msg.newUserDetails.name + '" registered. Welcome!')
+                          MsgControl.prepareServerUserSavedMsg ('User "' + msg.newUserDetails.name + '" registered. Welcome!')
                   );
                 } else {
                   pswdConnection.sendUTF (
@@ -426,7 +426,7 @@ wsServer.on('request', function(request) {
   }
 
   for ( i = 0; i < request.requestedProtocols.length; i++ ) {
-    console.log('\nREQUEST RECIEVED, testing protocols: "' + BroadcastProtocol + '"" and "' + SystemProtocol + '" on server, Vs. "' + request.requestedProtocols[i] + '" from client.' );
+    console.log('\nREQUEST RECIEVED, testing protocols: "' + BroadcastProtocol + '" and "' + SystemProtocol + '" on server, Vs. "' + request.requestedProtocols[i] + '" from client.' );
     if ( request.requestedProtocols[i] === 'login-protocol' ) {
         status = acceptConnectionAsLogin(request);
     } if ( request.requestedProtocols[i] === BroadcastProtocol ) {
