@@ -9,7 +9,9 @@ v1.0.1
 v1.1.0
 v1.1.1
 v1.1.2
-v1.1.3 (current)
+v1.1.3
+v1.1.4
+v1.2.0 (current)
 
 
 
@@ -129,7 +131,7 @@ Also about the protected server mode:
 * The server has the option of being open or password protected.
 * MySQL Database integration to maintain a list of registered users.
 * Password encryption support.
-* Random protocol name generation to prevent unauthorised access.
+* Random protocols generation to prevent unauthorised access.
 
 
 

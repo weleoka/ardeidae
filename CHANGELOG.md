@@ -4,6 +4,13 @@ Changelog
 I decided it's time to start maintaining a changelog now, starting with version 1.0.2.
 
 
+Version 1.2.0
+-------------
+- Fixed issues with timestamps.
+- Server now responds with meta data to AJAX requests.
+- Enhanced config file.
+- Code overhaul and seperation into more files for exports-require availability.
+
 Version 1.1.2
 -------------
 *Released 2015-01-28*

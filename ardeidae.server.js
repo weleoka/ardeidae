@@ -12,59 +12,11 @@ var MsgControl = require('ardeidae').msgControl;
 var Broadcaster = require('ardeidae').broadcaster;
 var LogKeeper = require('ardeidae').logKeeper;
 var DbManager = require('ardeidae').dbManager;
+var Utilities = require('ardeidae').utilities;
 var Config = require('ardeidae').config;
 
 // Read information from config file... mostly done within functions to limit globals.
 var ProtectedServer = Config.ProtectedServer;
-
-
-
-/**
- * Function to test the origin of incoming connection.
- */
- function originIsAllowed(origin) {
-  var acceptedOrigins = Config.origins;
-  var i;
-  for ( i = 0; i < acceptedOrigins.length; i++) {
-    if ( origin === acceptedOrigins[i] ) {
-      return true;
-    }
-  }
-  return false;
-}
-
-
-
-/**
- * Function to test if item can be found in array.
- */
-function isNotInArray(search, arr) {
-  var len = arr.length;
-  while( len-- ) {
-      if ( arr[len] == search ) {
-         return false;
-      }
-  }
-  return true;
-}
-
-
-
-/**
- * Return current local time in readable format..
- */
-function getUtcNow ( format ) {
-  var now = new Date(),
-        now_utc;
-  if ( format === 'full' ) {
-    now_utc = new Date(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(),  now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
-    return now_utc;
-  }
-  if ( format === 'time' ) {
-    now_utc = new Date(now.getUTCHours(), now.getUTCMinutes(), now.getUTCSeconds());
-    return now_utc;
-  }
-}
 
 
 
@@ -187,7 +139,7 @@ var httpServer = http.createServer(function (request, response) {
 });
 
 httpServer.listen(Config.port, function() {
-  console.log( getUtcNow ('full') + ': HTTP server is listening on port ' + Config.port );
+  console.log( Utilities.getUtcNow ('full') + ': HTTP server is listening on port ' + Config.port );
 });
 
 
@@ -216,7 +168,7 @@ function acceptConnectionAsBroadcast(request) {
   connection.broadcastId = UsrControl.getArrayLength();
   // Log the connection to broadcast array.
   Broadcaster.addPeer(connection);
-  console.log( getUtcNow ('time') + ': BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
+  console.log( Utilities.getUtcNow ('time') + ': BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
   UsrControl.addNewUser( connection.broadcastId, request.origin );
 
 // Say hi, and transmit historical messages to new user.
@@ -255,7 +207,7 @@ function acceptConnectionAsBroadcast(request) {
               var privateMsg = MsgControl.preparePrivateEcho( peerName, msg.message );
               // If user not in reciever array, push.
               console.log('PEER: ' + peerID + ' Array: ' + reciever);
-              if ( isNotInArray(peerID, reciever) ) {
+              if ( Utilities.isNotInArray(peerID, reciever) ) {
                 reciever.push(peerID);
               }
               Broadcaster.broadcastPeerPrivateInfo( privateMsg, reciever );
@@ -308,7 +260,7 @@ function acceptConnectionAsSystem(request) {
   sysConnection.broadcastId = UsrControl.getArrayLength() -1;
    // Log the connection to server broadcasts array.
   Broadcaster.addSystemPeer(sysConnection);
-  console.log( getUtcNow ('time') + ': SYSTEM connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
+  console.log( Utilities.getUtcNow ('time') + ': SYSTEM connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
 
   sysConnection.on('message', function(message) {
      console.log('Recieved system message: ' + message.utf8Data + '... passing to handler.');
@@ -333,7 +285,7 @@ function acceptConnectionAsSystem(request) {
   });
 
   sysConnection.on('close', function(reasonCode, description) {
-    console.log( getUtcNow ('time')
+    console.log( Utilities.getUtcNow ('time')
                       + ': Peer ' + sysConnection.remoteAddress
                       + ' Broadcastid = ' + sysConnection.broadcastId
                       + ' disconnected from SYSTEM. Because: ' + reasonCode
@@ -352,7 +304,7 @@ function acceptConnectionAsSystem(request) {
 function acceptConnectionAsLogin (request) {
   console.log('Protocol OK, accepting LOGON connection...');
   var pswdConnection = request.accept('login-protocol', request.origin);
-  console.log( getUtcNow ('time') + ': LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
+  console.log( Utilities.getUtcNow ('time') + ': LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
 
   pswdConnection.on('message', function(message) {
      console.log('Recieved system login message: ' + message.utf8Data + '... passing to handler.');
@@ -400,7 +352,7 @@ function acceptConnectionAsLogin (request) {
   });
 
   pswdConnection.on('close', function(reasonCode, description) {
-    console.log( getUtcNow ('time')
+    console.log( Utilities.getUtcNow ('time')
                       + ': Peer ' + pswdConnection.remoteAddress
                       + ' Broadcastid = ' + pswdConnection.broadcastId
                       + ' disconnected from LOGIN. Because: ' + reasonCode
@@ -419,9 +371,9 @@ wsServer.on('request', function(request) {
   var i, status = null;
 
 // Make sure we only accept requests from an allowed origin
-  if ( !originIsAllowed(request.origin) ) {
+  if ( !Utilities.originIsAllowed(request.origin, Config.origins) ) {
     request.reject();
-    console.log( getUtcNow ('time')  + ': Connection from origin ' + request.origin + ' rejected.');
+    console.log( Utilities.getUtcNow ('time')  + ': Connection from origin ' + request.origin + ' rejected.');
     return;
   }
 
