@@ -123,7 +123,7 @@ var UsrControl = new UsrControl();
 var MsgControl = new MsgControl();
 var Broadcaster = new Broadcaster(Config.protocol, ProtectedServer);
 var LogKeeper = new LogKeeper();
-var HttpControl = new HttpControl(Config.serverCallsign, ProtectedServer);
+var HttpControl = new HttpControl(Config.serverCallsign, Config.serverVersion, ProtectedServer);
 // var DbManager = new DbManager(Config.dbDetails); // DbManager is started before handling CLI parameters.
 
 

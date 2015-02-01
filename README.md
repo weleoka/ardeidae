@@ -13,7 +13,7 @@ v1.1.3
 v1.1.4
 v1.2.0 (current)
 
-
+(Note to author: version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git)
 
 Requirements
 ---------------
@@ -91,12 +91,15 @@ Config-file
 ------------
 * port: specify the port which the http server is listening on.
 * serverCallsign: here you are free to call your server whatever you wish.
+* serverVersion: Do not change this value; it will have unforseen concequences for the clients.
 * SSL certificates, make sure the directory is correct.
 * Set the protected mode of the server.
 	Please note that the server is by default not using HTTPS/SSL, and protected mode simply means that users require a registered user and password before they can use the server.
-* dbDetails. This is important in order for the server to have registered users. Future versions of Ardeidae will use the same credentials for creating effective history logs of messages and storing in DB.
+* dbDetails: This is important in order for the server to have registered users. Future versions of Ardeidae will use the same credentials for creating effective history logs of messages and storing in DB.
+* dbDetailsTable: the table name which the server will create in the SQL database.
 * The protocols are the default protocols that the server listens for. If in protected mode the server will generate random protocols which the client needs to have before being allowed to connect.
 * Origins is very important. The server will only accept incoming websocket connections if the client is at the specified origins.
+* AllowAll (not recommended) this will allow users to connect from any origin.
 
 
 For more complete documentation, see the [Documentation Wiki (not yet online)](Not online as yet).
