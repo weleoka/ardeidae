@@ -74,7 +74,7 @@ var logonAction = function (user, msg, callback) {
  */
 function saveNewUser (details, callback) {
   DbManager.insertSystemPeer();
-  var created = Date.now();
+  var created = new Date();
   if ( details.hasOwnProperty('password') ) {
       password(details.password).hash(function(error, hash) {
           if (error) {
