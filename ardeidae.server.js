@@ -21,9 +21,9 @@ var ProtectedServer = Config.ProtectedServer;
 
 
 /**
- * Check if it's a system message and handle it accordingly.
+ * Function to check if it's a system message and handle it accordingly.
  */
-function is_system_msg(userId, msg) {
+function isSystemMsg(userId, msg) {
   if ( msg.lead === 'init' ) {
      console.log('SYS:init recieved...');
      UsrControl.setNameAtIndex(msg.name, userId);
@@ -51,7 +51,7 @@ function is_system_msg(userId, msg) {
 
 
 /**
- * Function to test password from user found in DB to arriving password.
+ *  Function to test password from user found in DB to arriving password.
  */
 var logonAction = function (user, msg, callback) {
     password (msg.password).verifyAgainst(user.password, function(error, verified) {
@@ -70,7 +70,7 @@ var logonAction = function (user, msg, callback) {
 
 
 /**
- * Function to save new user to DB and hash their password.
+ *  Function to save new user to DB and hash their password.
  */
 function saveNewUser (details, callback) {
   DbManager.insertSystemPeer();
@@ -91,8 +91,9 @@ function saveNewUser (details, callback) {
 }
 
 
-// DbManager be required by the incoming CLI parameters so it start here.
+// DbManager be required by the incoming CLI parameters so start it here.
 var DbManager = new DbManager(Config.dbDetails, Config.dbDetailsTable);
+
 
 
 /**
@@ -139,14 +140,15 @@ var httpServer = http.createServer(function (request, response) {
 });
 
 httpServer.listen(Config.port, function() {
-  console.log( Utilities.getUtcNow ('full') + ': HTTP server is listening on port ' + Config.port );
+  console.log( Utilities.getUtcNow ('full') +
+    ': HTTP server is listening on port ' + Config.port +
+    ' (Ardeidae Version v' + Config.serverVersion + ')');
 });
 
 
  /**
   *  Create an object for the websocket. (Incoming WS requests handled at bottom of this file).
   * https://github.com/Worlize/WebSocket-Node/wiki/Documentation
-  *
   */
 var wsServer = new WebSocketServer({  httpServer: httpServer,  autoAcceptConnections: false });
 // Generate the protocols for websocket and wsSystem
@@ -192,7 +194,7 @@ function acceptConnectionAsBroadcast(request) {
         if (incoming.type === 'utf8') {
             msg = JSON.parse(incoming.utf8Data);
 
-            // Regular messaging handler
+    // Regular messaging handler
             if ( !msg.reciever ) {
               Broadcaster.broadcastPeerRegularInfo(
                     MsgControl.prepareEcho(
@@ -201,11 +203,11 @@ function acceptConnectionAsBroadcast(request) {
               );
               LogKeeper.saveRegularMessage( peerID, peerName, peerOrigin,  msg.message );
             }
-            // Private messaging handler
+    // Private messaging handler
             if ( msg.reciever ) {
               var reciever = msg.reciever;
               var privateMsg = MsgControl.preparePrivateEcho( peerName, msg.message );
-              // If user not in reciever array, push.
+    // If user not in reciever array, push.
               console.log('PEER: ' + peerID + ' Array: ' + reciever);
               if ( Utilities.isNotInArray(peerID, reciever) ) {
                 reciever.push(peerID);
@@ -213,12 +215,6 @@ function acceptConnectionAsBroadcast(request) {
               Broadcaster.broadcastPeerPrivateInfo( privateMsg, reciever );
               LogKeeper.savePrivateMessage( peerID, peerName, peerOrigin,  msg.message, msg.reciever );
             }
-        }
-        else if (incoming.type === 'binary') {
-            msg = incoming.binaryData;
-            console.log('Received Binary Message of ' + msg.length + ' bytes');
-            LogKeeper.saveRegularMessage( peerID, peerName, peerOrigin,  msg );
-            connection.sendBytes( msg );
         }
   });
 
@@ -265,7 +261,7 @@ function acceptConnectionAsSystem(request) {
   sysConnection.on('message', function(message) {
      console.log('Recieved system message: ' + message.utf8Data + '... passing to handler.');
      var msg = JSON.parse(message.utf8Data);
-     if ( is_system_msg( sysConnection.broadcastId, msg ) ) {
+     if ( isSystemMsg( sysConnection.broadcastId, msg ) ) {
           // Get name from message, prepare info message and broadcast.
          var contents = msg.name + ' has entered the zone.';
          Broadcaster.broadcastServerRegularInfo (
@@ -309,40 +305,48 @@ function acceptConnectionAsLogin (request) {
   pswdConnection.on('message', function(message) {
      console.log('Recieved system login message: ' + message.utf8Data + '... passing to handler.');
      var msg = JSON.parse(message.utf8Data);
+
      if ( ProtectedServer ) {
+  // User supplied a password
         if ( msg.lead === 'pswd' ) {
              DbManager.findSystemPeer();
              DbManager.executeSQL(msg.acronym, function (user) {
+  // User was found in the DB.
                  if ( user.hasOwnProperty('acronym') ) {
                      logonAction (user, msg, function (checkResult) {
                          pswdConnection.sendUTF (
                              MsgControl.prepareServerLoginMsg ( checkResult, BroadcastProtocol, SystemProtocol )
                          );
                      });
+  // User not found in DB.
                  } else {
                     pswdConnection.sendUTF (
                             MsgControl.prepareServerGeneralMsg ('Invalid username.')
                     );
                 }
              });
+  // User wants to register.
         } else if ( msg.lead === 'rgstr' ) {
             saveNewUser ( msg.newUserDetails, function (results) {
+  // Registration success
                 if ( results.hasOwnProperty('affectedRows') ) {
                   pswdConnection.sendUTF (
                           MsgControl.prepareServerUserSavedMsg ('User "' + msg.newUserDetails.name + '" registered. Welcome!')
                   );
+  // User already excists.
                 } else {
                   pswdConnection.sendUTF (
                           MsgControl.prepareServerGeneralMsg ('User "' + msg.newUserDetails.name + '" already exists... use a different username.')
                   );
                 }
-
             });
+  // No password supplied for login.
         } else {
             pswdConnection.sendUTF (
                     MsgControl.prepareServerGeneralMsg ('Protected server, need password.')
             );
         }
+  // Open server, no password required
      } else {
         pswdConnection.sendUTF (
                 MsgControl.prepareServerGeneralMsg ('Open server, no need for password..')

@@ -1,15 +1,23 @@
 Changelog
 =========
 
-I decided it's time to start maintaining a changelog now, starting with version 1.0.2.
+I decided it's time to start maintaining a changelog now, starting with version 1.0.1.
+
+
+Version 1.2.1
+-------------
+*Released 2015-02-01*
+- Added config parameters and updated documentation in README.
 
 
 Version 1.2.0
 -------------
+*Released 2015-02-01*
 - Fixed issues with timestamps.
 - Server now responds with meta data to AJAX requests.
 - Enhanced config file.
 - Code overhaul and seperation into more files for exports-require availability.
+
 
 Version 1.1.2
 -------------
@@ -18,6 +26,7 @@ Version 1.1.2
 - Effective feedback on various logon scenarios.
 - Purge of null values from array of JSON before transmit.
 - Support for creating new user. Client needs some work still, but functional.
+
 
 Version 1.1.1
 -------------

@@ -2,6 +2,8 @@
 Messaging Server powered by Node.js and [websockets](https://github.com/theturtle32/WebSocket-Node)
 =================================================
 
+
+
 Ardeidae Server versions
 ---------------
 v1.0.0
@@ -11,9 +13,13 @@ v1.1.1
 v1.1.2
 v1.1.3
 v1.1.4
-v1.2.0 (current)
+v1.2.0
+v1.2.1 (current)
 
-(Note to author: version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git)
+(Note to author:
+version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git)
+
+
 
 Requirements
 ---------------
@@ -42,6 +48,9 @@ The Ardeidae server.
 
 Documentation
 =============
+
+For more complete documentation, see the [Documentation Wiki](http://www.student.bth.se/~kawe14/javascript/kmom10/docs/index.php).
+
 
 
 Installation
@@ -102,8 +111,7 @@ Config-file
 * AllowAll (not recommended) this will allow users to connect from any origin.
 
 
-For more complete documentation, see the [Documentation Wiki (not yet online)](Not online as yet).
-
+For more complete documentation, see the [Documentation Wiki](http://www.student.bth.se/~kawe14/javascript/kmom10/docs/index.php).
 
 
 
@@ -170,3 +178,97 @@ Licence
 ==============
 
 Creative Commons Share-Alike v4.0
+
+
+Krav k1: Paketera, presentera och produktifiera
+-----------
+Ditt projektresultat skall paketeras och presenteras på ett fördelaktigt sätt. Vi kallar detta att produktifiera ditt resultat. Gör detta bra så höjer du ditt resultat från ett “vanligt studentjobb” till ett “proffsjobb”.
+
+Detta innebär en me-sida för produkten:
+
+    En presentation av vad din “produkt” gör, vilket problem den löser.
+    Instruktioner hur man installerar, konfigurerar och använder “produkten”.
+    Källkoden skall finnas på GitHub.
+
+På denna del kan du maximalt få 10 poäng. Ett “vanligt studentjobb” ger 5 poäng, ett “proffsjobb” kan ge upp till 10 poäng.
+
+
+Krav k2: Ha koll på konkurrenterna och lär av dem
+-----------
+Ta reda på vilka konkurrenter du har till din produkt. Analysera dem och jämför dem med din produkt. Gör analysen tillgänglig för dina kunder, som en del av din produktpresentation.
+
+Gör du detta bra kan du få som resultat en utvecklingsplan för din produkt, presentera vilka krav och features din produkt stödjer i dagsläget och vilka som kommer i nästa version.
+
+Försök besvara frågan varför just din produkt är — eller kommer att bli — bättre, enklare, flexiblare, enklare att använda/integrera/anpassa än konkurrenternas.
+
+På denna del kan du maximalt få 10 poäng.
+
+
+Krav k3: Kvalitet och omfattning
+-------------
+Din produkt har en omfattning som motsvarar mellan 20h till 80h, delvis ställt i relation till det vi gått igenom i kursen och om möjligt kopplat till din egen kunskapsnivå du hade inför kursen.
+
+Vi bedömer hur stor omfattning vi anser produkten har samt gör en bedömning av produktens kvalitet. Detta ger underlaget för poängbedömningen. Ju större omfattning och desto bättre kvalitet desto högre poäng.
+
+Ett enklare projekt får 5 poäng och ett mer omfattande och krävande projekt för 10 poäng.
+
+Ett enklare projekt kan innebära att du tagit något från kursmomentet och gjort viss vidareutveckling.
+
+Ett mer omfattande och krävande projekt innebär att du väsentligt skiljt dig från den koden som finns i kursmomenten.
+
+På denna del kan du maximalt få 10 poäng.
+
+
+Krav k4, k5, k6: Valbart krav (optionellt)
+----------
+Om du verkligen anser att du är värd ett högre betyg så måste du visa framfötterna. I detta fallet innebär det att du formulerar de optionella kraven på egen hand eller i samspråk med läraren.
+
+Det handlar främst om den nivå du har på din produkt och vissa “features” kan betraktas omfatta ett eller flera optionella krav.
+
+Det är också möjligt att du har lagt en hel del extra kraft på de vanliga kursmomenten och gjort utöver det som står under rubriken “Extra”. Om du gjort det och kan visa upp dessa på din me-sida så kan de motsvara ett optionellt krav.
+
+Vill du vara säker så måste du ha en dialog med läraren. Fråga i forumet så får du svar där, sedan har du det på svart-och-vitt vad som gäller, så gott det går.
+
+Tänk på att även ett enklare projekt kan ha features som kan lyftas upp som valbara krav.
+
+Alltså, lyft upp det som du anser borde lyftas upp. Beskriv vad du gjort, varför och hur. Var tydlig — bedömning utgår från din beskrivning och därefter tittar vi på din lösning.
+
+På denna del kan du få totalt 30 poäng (10 + 10 + 10),
+Redovisning
+
+
+På din redovisningssida, skriv följande:
+-------------
+1.1. Länka till din produkt, se krav k1.
+
+1.2. För varje krav du implementerat, dvs k1-k6, skriver du ett textstycke om ca 15 meningar där du beskriver vad du gjort och hur du tänkt.
+
+1.3. Ett allmänt stycke om hur projektet gick att genomföra. Problem/lösningar/strul/enkelt/svårt/snabbt/lång tid, etc. Var projektet lätt eller svårt? Tog det lång tid? Vad var svårt och vad gick lätt? Var det ett bra och rimligt projekt för denna kursen?
+
+1.4. Avsluta med ett nytt stycke med dina tankar om kursen och vad du anser om materialet och handledningen (ca 5-10 meningar). Ge feedback till lärarna och förslå eventuella förbättringsförslag till kommande kurstillfällen. Är du nöjd/missnöjd? Kommer du att rekommendera kursen till dina vänner/kollegor? På en skala 1-10, vilket betyg ger du kursen?
+
+2. Ta en kopia av texten på din redovisningssida och kopiera in den på Its/redovisningen. Glöm inte länka till din me-sida och projektet.
+
+3. Ta en kopia av texten från din redovisningssida och gör ett inlägg i kursforumet och berätta att du är klar.
+
+
+<h1>KMOM10</h1>
+
+Mitt intresse vad gäller Javascript ligger i inte i första hand i snygga effekter, tool-tips och så vidare, utan snarare inom områden som prestanda, tillförlitlighet och kompatibilitet. Jag tog som projekt det som jag tyckter passar bäst för att visa vad jag kan vad gäller detta, och samtidigt lära mig mer - nämligen ett server-klient paket för chat med websockets.
+
+Jag tycker att det här projektet har gett mig mycket god insikt i hur man implementerar Javascript best-practices, och även säkerhets aspekter för server-klient utväckling. Spännande har också varit att arbeta så mycket med Ajax och websockets.
+
+Hela paketet har vuxit mycket större änn vad jag väntat mig. Jag tycker att principen DRY följs ganska väl i mitt projekt, och server modulen ligger på nästan precis 1000 SLOC, klienten ca. 750 SLOC. Det är ändå såpass mycket källkod att man måste dela upp koden, undvika globala variabler, implementera config-filer, och debug-metodik.
+
+
+
+htmlEntities filtret görs endast på servern istället för i klienten också.
+
+När användaren ansluts så skickas direkt en init med användarnamnet som sedan sätts i servern. Detta namn används sedan när meddelanden skickas, och inte det som kommer med i JSON från klienten eftersom att det kan ändras på klientsidan vid tidpunkt efter anslutning... dvs. om jag inte gjort på det här viset skulle man ganska lätt kunna låtsas vara någon annan.
+
+
+
+
+Det svåraste har varit att hantera det faktum att javascript är event-driven. Jag har fått lära mig callback functions, främst där AJAX och MySQL möter javascript. Att Javascript är single-threaded är något jag fått förstå. Det fins lösningar för att simulera ett multi-thread för att på så vis jobba runt den otympliga kod man snabbt kommer in i med callback funktioner, men på den nivån som mitt projekt uppnått så krävs inte det.
+
+
