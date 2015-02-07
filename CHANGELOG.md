@@ -1,7 +1,14 @@
 Changelog
 =========
 
-I decided it's time to start maintaining a changelog now, starting with version 1.0.1.
+Changlog Ardeidae Node.js powered server.
+
+
+Version 1.2.2
+-------------
+*Released 2015-02-07*
+- Added common object helper method toString to some classes. Code oversight.
+- getPropertyNames, copyProperties, copyUndefinedProperties utilities added.
 
 
 Version 1.2.1
