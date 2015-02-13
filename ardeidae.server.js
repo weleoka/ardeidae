@@ -6,14 +6,14 @@ var WebSocketServer = require('websocket').server;
 var password = require('password-hash-and-salt');
 
 // Load the Ardeidae module components.
-var HttpControl = require('ardeidae').httpControl;
-var UsrControl = require('ardeidae').usrControl;
-var MsgControl = require('ardeidae').msgControl;
-var Broadcaster = require('ardeidae').broadcaster;
-var LogKeeper = require('ardeidae').logKeeper;
-var DbManager = require('ardeidae').dbManager;
-var Utilities = require('ardeidae').utilities;
-var Config = require('ardeidae').config;
+var HttpControl = require('./lib/ardeidae').httpControl;
+var UsrControl = require('./lib/ardeidae').usrControl;
+var MsgControl = require('./lib/ardeidae').msgControl;
+var Broadcaster = require('./lib/ardeidae').broadcaster;
+var LogKeeper = require('./lib/ardeidae').logKeeper;
+var DbManager = require('./lib/ardeidae').dbManager;
+var Utilities = require('./lib/ardeidae').utilities;
+var Config = require('./lib/ardeidae').config;
 
 // Read information from config file... mostly done within functions to limit globals.
 var ProtectedServer = Config.ProtectedServer;
