@@ -124,7 +124,7 @@ var UsrControl = new UsrControl();
 var MsgControl = new MsgControl();
 var Broadcaster = new Broadcaster(Config.protocol, ProtectedServer);
 var LogKeeper = new LogKeeper();
-var HttpControl = new HttpControl(Config.serverCallsign, Config.serverVersion, ProtectedServer);
+var HttpControl = new HttpControl(Config, ProtectedServer);
 // var DbManager = new DbManager(Config.dbDetails); // DbManager is started before handling CLI parameters.
 
 
@@ -132,11 +132,12 @@ var HttpControl = new HttpControl(Config.serverCallsign, Config.serverVersion, P
 /**
  *  HTTP Server
  */
+HttpControl.setOnlineUsers( UsrControl.getUserCount() );
+HttpControl.setHistoricalUsers( UsrControl.getArrayLength() );
+var serverStats = HttpControl.getStats();
+console.log(serverStats);
 var httpServer = http.createServer(function (request, response) {
-  HttpControl.setOnlineUsers( UsrControl.getUserCount() );
-  HttpControl.setHistoricalUsers( UsrControl.getArrayLength() );
-  var serverStats = HttpControl.getStats();
-  HttpControl.handleHttpRequest(request, response, serverStats);
+  HttpControl.handleHttpRequest( request, response, serverStats );
 });
 
 httpServer.listen(Config.port, function() {
@@ -144,6 +145,48 @@ httpServer.listen(Config.port, function() {
     ': HTTP server is listening on port ' + Config.port +
     ' (Ardeidae Version v' + Config.serverVersion + ')');
 });
+
+
+/**
+ *  HTTP make request and send stats to HUB.
+ */
+
+var options = {
+    host: Config.hub.address,
+    port: Config.hub.port,
+    path: Config.hub.baseUrl,
+    method: Config.hub.method,
+    headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': serverStats.length
+    }
+};
+
+setInterval(function() {
+    // Set up the request
+    var post_req = http.request(options, function(res) {
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+            console.log('Response: ' + chunk);
+        });
+    });
+    post_req.on('error', function(e) {
+        console.log('problem with request: ' + e.message);
+    });
+
+    // post the data
+    post_req.write(serverStats);
+    post_req.end();
+}, 4000);
+
+
+
+
+
+
+
+
+
 
 
  /**
