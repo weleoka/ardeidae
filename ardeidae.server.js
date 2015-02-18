@@ -134,8 +134,8 @@ var HttpControl = new HttpControl(Config, ProtectedServer);
  */
 HttpControl.setOnlineUsers( UsrControl.getUserCount() );
 HttpControl.setHistoricalUsers( UsrControl.getArrayLength() );
+
 var serverStats = HttpControl.getStats();
-console.log(serverStats);
 var httpServer = http.createServer(function (request, response) {
   HttpControl.handleHttpRequest( request, response, serverStats );
 });
@@ -150,7 +150,6 @@ httpServer.listen(Config.port, function() {
 /**
  *  HTTP make request and send stats to HUB.
  */
-
 var options = {
     host: Config.hub.address,
     port: Config.hub.port,
@@ -162,12 +161,14 @@ var options = {
     }
 };
 
-setInterval(function() {
+setInterval( function() {
     // Set up the request
+    var responseBodyBuffer = [];
     var post_req = http.request(options, function(res) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
-            console.log('Response: ' + chunk);
+            responseBodyBuffer.push( chunk );
+            HttpControl.setHubId ( JSON.parse( responseBodyBuffer ) );
         });
     });
     post_req.on('error', function(e) {
