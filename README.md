@@ -1,31 +1,15 @@
 
-Messaging Server powered by Node.js and [websockets](https://github.com/theturtle32/WebSocket-Node)
-=================================================
+Messaging Server powered by Node.js and using Websockets.
 
-Test line to make a commit.
+## Ardeidae Server versions
 
-Ardeidae Server versions
----------------
-v1.0.0
-v1.0.1
-v1.1.0
-v1.1.1
-v1.1.2
-v1.1.3
-v1.1.4
-v1.2.0
-v1.2.1
-v1.2.1
-v1.2.2 (current)
+v1.2.3 (current)
 
 (Note to author:
 version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git, and homepage.)
 
 
-
-Requirements
----------------
-
+## Requirements
 Requires node.js.
 
 Also a MySQL database server if you want password protection (and long-term message logging) for server.
@@ -39,25 +23,19 @@ Any peer connecting to the server with the custom client requires a web browser 
 
 
 
-Overview
---------
-
-This package is the result of 15 days work and is released as is. If anyone takes a look at the code, available on github, and sees any improvements then please let me know. This is my first node.js powered server/app package.
+## Overview
+This package is the result of much work and is released as is. If anyone takes a look at the code, available on github, and sees any improvements then please let me know. This is my first node.js powered server/app package.
 
 The Ardeidae server.
 
 
 
-Documentation
-=============
-
-For more complete documentation, see the [Documentation Wiki](http://www.student.bth.se/~kawe14/javascript/kmom10/docs/index.php).
+## Documentation
+For more complete documentation, see the [Documentation Wiki](http://www.student.bth.se/~kawe14/javascript/kmom10/documentation_server.php).
 
 
 
-Installation
-------------
-
+## Installation
 I strongly recommend the custom Ardeidae client for testing the server:
 $ git clone https://www.github.com/weleoka/ardeidae.client.git
 
@@ -69,9 +47,7 @@ The server depends on some other modules. Websocket and the mysql drivers for no
 
 
 
-Usage
-------------
-
+## Usage
 There is a server config file where deployment defaults can be specified, as well as important aspects such as SQL credentials, SSL certificates for HTTPS and more.
 
 
@@ -98,8 +74,7 @@ All variables are specified within the config file, that is the place to edit se
 
 
 
-Config-file
-------------
+## Config-file
 * port: specify the port which the http server is listening on.
 * serverCallsign: here you are free to call your server whatever you wish.
 * serverVersion: Do not change this value; it will have unforseen concequences for the clients.
@@ -117,8 +92,7 @@ For more complete documentation, see the [Documentation Wiki](http://www.student
 
 
 
-Current Features:
------------------
+### Current Features:
 General functinality:
 * Server config file.
 * Message logging.
@@ -147,9 +121,7 @@ Also about the protected server mode:
 * Random protocols generation to prevent unauthorised access.
 
 
-
-Known Issues/Missing Features:
-------------------------------
+### Known Issues/Missing Features:
 General functionality:
 * Needs a function to notify peers when user is typing a message.
 * Consider the format for saving message log. JSON or Object?
@@ -164,21 +136,11 @@ Also about the protected server mode:
 * The servers protocols are not generated as they should be. They are simply made using a Math.random() function... and random is not random when it comes to computers.
 
 
+## Credits
+Ardeidae is an open source project. However, many thanks to the developers of Node, Websocket and MySQL for node and the password-hash-and-salt module for node.
 
 
-
-Credits
-==============
-
-Ardeidae is a one man project. However, many thanks to the developers of Node, Websocket and MySQL for node and the password-hash-and-salt module for node.
-
-
-
-
-
-Licence
-==============
-
+## Licence
 Creative Commons Share-Alike v4.0
 
 

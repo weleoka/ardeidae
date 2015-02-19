@@ -162,7 +162,6 @@ var options = {
 };
 
 setInterval( function() {
-    // Set up the request
     var responseBodyBuffer = [];
     var post_req = http.request(options, function(res) {
         res.setEncoding('utf8');
