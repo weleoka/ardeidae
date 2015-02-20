@@ -14,14 +14,20 @@ v1.2.1
 v1.2.1
 v1.2.2
 v1.2.3
+v1.3.0
 
 
-Version 1.2.2
+
+Version 1.3.0
+-------------
+*Released 2015-02-21*
+- Requests and responses for client on selecting server implemented.
+
+
+Version 1.2.3
 -------------
 *Released 2015-02---*
 - Requests and responses vs. Ardeidae Hub via HTTP implemented.
-- .
-
 
 
 Version 1.2.2

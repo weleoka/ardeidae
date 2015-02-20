@@ -3,7 +3,7 @@ Messaging Server powered by Node.js and using Websockets.
 
 ## Ardeidae Server versions
 
-v1.2.3 (current)
+v1.3.0 (current)
 
 (Note to author:
 version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git, and homepage.)

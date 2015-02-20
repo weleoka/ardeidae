@@ -132,12 +132,8 @@ var HttpControl = new HttpControl(Config, ProtectedServer);
 /**
  *  HTTP Server
  */
-HttpControl.setOnlineUsers( UsrControl.getUserCount() );
-HttpControl.setHistoricalUsers( UsrControl.getArrayLength() );
-
-var serverStats = HttpControl.getBasicStats();
 var httpServer = http.createServer(function (request, response) {
-  HttpControl.handleHttpRequest( request, response, serverStats );
+  HttpControl.handleHttpRequest( request, response );
 });
 
 httpServer.listen(Config.port, function() {
@@ -216,6 +212,8 @@ function acceptConnectionAsBroadcast(request) {
   // Log the connection to broadcast array.
   Broadcaster.addPeer(connection);
   console.log( Utilities.getUtcNow ('time') + ': BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
+  HttpControl.onlineUsers++;
+  HttpControl.historicalUsers++;
   UsrControl.addNewUser( connection.broadcastId, request.origin );
 
 // Say hi, and transmit historical messages to new user.
@@ -265,7 +263,7 @@ function acceptConnectionAsBroadcast(request) {
 
   connection.on('close', function() {
     Broadcaster.removePeer(connection.broadcastId);
-
+    HttpControl.onlineUsers--;
     Broadcaster.broadcastServerRegularInfo(
             MsgControl.prepareServerInfoMsg(
                   UsrControl.findNameByIndex(
