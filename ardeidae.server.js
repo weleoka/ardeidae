@@ -103,7 +103,7 @@ var DbManager = new DbManager(Config.dbDetails, Config.dbDetailsTable);
  // console.log('myArgs: ', myArgs);
  switch (myArgs[0]) {
    case 'private':
-     console.log( '\nArdeidae server in private/protected mode.\n============================================');
+     console.log( '\nArdeidae server ' + '(v' + Config.serverVersion + ') in private/protected mode.\n============================================');
      var ProtectedServer = true;
      break;
    case 'setup':
@@ -112,7 +112,7 @@ var DbManager = new DbManager(Config.dbDetails, Config.dbDetailsTable);
      DbManager.executeSQL([], function () { process.exit(0); });
      break;
    default:
-     console.log( '\nArdeidae server in default mode.\n====================================');
+     console.log( '\nArdeidae server ' + '(v' + Config.serverVersion + ') in default mode.\n====================================');
  }
 
 
@@ -135,15 +135,14 @@ var HttpControl = new HttpControl(Config, ProtectedServer);
 HttpControl.setOnlineUsers( UsrControl.getUserCount() );
 HttpControl.setHistoricalUsers( UsrControl.getArrayLength() );
 
-var serverStats = HttpControl.getStats();
+var serverStats = HttpControl.getBasicStats();
 var httpServer = http.createServer(function (request, response) {
   HttpControl.handleHttpRequest( request, response, serverStats );
 });
 
 httpServer.listen(Config.port, function() {
   console.log( Utilities.getUtcNow ('full') +
-    ': HTTP server is listening on port ' + Config.port +
-    ' (Ardeidae Version v' + Config.serverVersion + ')');
+    ': Listening on port ' + Config.port );
 });
 
 
@@ -155,13 +154,15 @@ var options = {
     port: Config.hub.port,
     path: Config.hub.baseUrl,
     method: Config.hub.method,
-    headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': serverStats.length
-    }
+    headers: ''
 };
-
 setInterval( function() {
+  HttpControl.getStats(function (stats) {
+    options.headers = {
+        'Content-Type': 'application/json',
+        'Content-Length': stats.length
+    };
+
     var responseBodyBuffer = [];
     var post_req = http.request(options, function(res) {
         res.setEncoding('utf8');
@@ -174,9 +175,10 @@ setInterval( function() {
         console.log('problem with request: ' + e.message);
     });
 
-    // post the data
-    post_req.write(serverStats);
+    post_req.write(stats);
     post_req.end();
+    return;
+  });
 }, 4000);
 
 
