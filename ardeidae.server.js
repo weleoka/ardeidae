@@ -142,41 +142,51 @@ httpServer.listen(Config.port, function() {
 });
 
 
+
 /**
  *  HTTP make request and send stats to HUB.
  */
-var options = {
+ var options = {
     host: Config.hub.address,
     port: Config.hub.port,
     path: Config.hub.baseUrl,
     method: Config.hub.method,
     headers: ''
 };
-setInterval( function() {
+var roo = 0;
+var stopMsgRepeat = function (message) {
+  var msg = message || 0;
+  if ( roo === msg ) { return msg; }
+  if ( roo !== msg ) { console.log(msg); return msg; }
+};
+
+var reportToHub = function() {
   HttpControl.getStats(function (stats) {
     options.headers = {
         'Content-Type': 'application/json',
         'Content-Length': stats.length
     };
 
-    var responseBodyBuffer = [];
     var post_req = http.request(options, function(res) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
-            console.log('Connected to HUB.');
+            var responseBodyBuffer = [];
+            roo = stopMsgRepeat('Connected to HUB.');
             responseBodyBuffer.push( chunk );
             HttpControl.setHubId ( JSON.parse( responseBodyBuffer ) );
         });
     });
+
     post_req.on('error', function(e) {
-        console.log('No connection to HUB: ' + e.message);
+       roo = stopMsgRepeat('No connection to HUB: ' + e.message);
     });
 
     post_req.write(stats);
     post_req.end();
     return;
   });
-}, 4000);
+};
+setInterval( reportToHub, Config.hub.reportingInterval );
 
 
 
