@@ -163,12 +163,13 @@ setInterval( function() {
     var post_req = http.request(options, function(res) {
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
+            console.log('Connected to HUB.');
             responseBodyBuffer.push( chunk );
             HttpControl.setHubId ( JSON.parse( responseBodyBuffer ) );
         });
     });
     post_req.on('error', function(e) {
-        console.log('problem with request: ' + e.message);
+        console.log('No connection to HUB: ' + e.message);
     });
 
     post_req.write(stats);
