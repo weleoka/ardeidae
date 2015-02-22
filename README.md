@@ -1,12 +1,16 @@
 
 Messaging Server powered by Node.js and using Websockets.
 
-## Ardeidae Server versions
+[Ardeidae homepage](http://www.student.bth.se/~kawe14/javascript/kmom10/webroot/index.php).
 
+
+
+## Ardeidae Server versions
 v1.3.0 (current)
 
 (Note to author:
 version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git, and homepage.)
+
 
 
 ## Requirements
@@ -15,6 +19,7 @@ Requires node.js.
 Also a MySQL database server if you want password protection (and long-term message logging) for server.
 
 Node.js module dependencies:
+
 * [WebSocket-Node](https://github.com/theturtle32/WebSocket-Node)
 * [node-mysql](https://github.com/felixge/node-mysql)
 * [password-hash-and-salt](https://github.com/florianheinemann/password-hash-and-salt)
@@ -26,13 +31,6 @@ Any peer connecting to the server with the custom client requires a web browser 
 ## Overview
 This package is the result of much work and is released as is. If anyone takes a look at the code, available on github, and sees any improvements then please let me know. This is my first node.js powered server/app package.
 
-The Ardeidae server.
-
-
-
-## Documentation
-For more complete documentation, see the [Documentation Wiki](http://www.student.bth.se/~kawe14/javascript/kmom10/documentation_server.php).
-
 
 
 ## Installation
@@ -40,6 +38,8 @@ I strongly recommend the custom Ardeidae client for testing the server:
 $ git clone https://www.github.com/weleoka/ardeidae.client.git
 
 The server depends on some other modules. Websocket and the mysql drivers for node.js. As well as a module for encrypting passwords. These versions tested with Ardeidae January 2015
+
+    $ npm install (to read from package.json OR:)
 
     $ npm install websocket@1.0.3
     $ npm install mysql@2.5.4
@@ -49,7 +49,6 @@ The server depends on some other modules. Websocket and the mysql drivers for no
 
 ## Usage
 There is a server config file where deployment defaults can be specified, as well as important aspects such as SQL credentials, SSL certificates for HTTPS and more.
-
 
 It is possible to override some config parameters on server deployment by passing command line flags:
 
@@ -88,12 +87,9 @@ All variables are specified within the config file, that is the place to edit se
 * AllowAll (not recommended) this will allow users to connect from any origin.
 
 
-For more complete documentation, see the [Documentation Wiki](http://www.student.bth.se/~kawe14/javascript/kmom10/docs/index.php).
-
-
-
 ### Current Features:
 General functinality:
+
 * Server config file.
 * Message logging.
 * Private messaging to single or multiple peers but remaining in public room.
@@ -110,34 +106,67 @@ General functinality:
 	- Number of online peers.
 	- Server uptime.
 	- Total logins since deployment.
+* On set interval reports current stats to ardeidae Hub.
+
 
 General server specs and options:
+
 * Displays output on host machine terminal about operations.
 
+
 Also about the protected server mode:
+
 * The server has the option of being open or password protected.
 * MySQL Database integration to maintain a list of registered users.
 * Password encryption support.
 * Random protocols generation to prevent unauthorised access.
 
 
+
 ### Known Issues/Missing Features:
-General functionality:
+Functionality:
+
 * Needs a function to notify peers when user is typing a message.
 * Consider the format for saving message log. JSON or Object?
 * Needs multiple chattrooms... curently, one instance of the server equals one chattroom.
 * Backup message log to database table (currently stored in array), but at intervals - to free up system memory and provide backup during service down time.
 * Stop users sending blank messages.
 
-General server specs and options:
+
+Specs and options:
+
 * Needs a mode switching capability for verbose mode & debug mode.
 
-Also about the protected server mode:
+
+Security:
+
 * The servers protocols are not generated as they should be. They are simply made using a Math.random() function... and random is not random when it comes to computers.
+
+
+Code, style and performance:
+
+* not formulated.
+
+
+## Contributing
+If you'd like to contribute to Ardeidae's development, start by forking the GitHub repo:
+
+https://github.com/weleoka/ardeidae.git
+
+The best way to get your changes merged is as follows:
+
+1. Clone your fork
+2. Hack away
+3. If you are adding significant new functionality, document it in the README
+4. Do not change the version number, I will do that on my end
+5. Push the repo up to GitHub
+6. Send a pull request to [weleoka/ardeidae](https://github.com/weleoka/ardeidae)
+
 
 
 ## Credits
 Ardeidae is an open source project. However, many thanks to the developers of Node, Websocket and MySQL for node and the password-hash-and-salt module for node.
+
 
 
 ## Licence
