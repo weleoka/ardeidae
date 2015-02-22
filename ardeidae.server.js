@@ -1,6 +1,7 @@
 /*globals Exception */
 
 // Require the module dependencies.
+var osFunctions = require('os');
 var http = require('http');
 var WebSocketServer = require('websocket').server;
 var password = require('password-hash-and-salt');
@@ -138,11 +139,13 @@ var httpServer = http.createServer(function (request, response) {
 
 httpServer.listen(Config.port, function() {
   console.log( Utilities.getUtcNow ('full') +
-    ': Listening on port ' + Config.port );
+    ': Listening on port ' + Config.port + ' domain: ' + osFunctions.hostname() );
 });
 
 
 
+console.log(osFunctions.totalmem());
+console.log(osFunctions.cpus());
 /**
  *  HTTP make request and send stats to HUB.
  */

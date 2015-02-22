@@ -48,11 +48,9 @@ The server depends on some other modules. Websocket and the mysql drivers for no
 
 
 ## Usage
-There is a server config file where deployment defaults can be specified, as well as important aspects such as SQL credentials, SSL certificates for HTTPS and more.
+In config file deployment defaults can be specified, as well as important aspects such as SQL credentials, SSL certificates for HTTPS and more.
 
 It is possible to override some config parameters on server deployment by passing command line flags:
-
-So, the server can be started on the commandline, there are some flags you can pass in.
 (note the application only accepts one argument/flag, as a standalone word without any dashes etc.)
 
 
@@ -85,6 +83,7 @@ All variables are specified within the config file, that is the place to edit se
 * The protocols are the default protocols that the server listens for. If in protected mode the server will generate random protocols which the client needs to have before being allowed to connect.
 * Origins is very important. The server will only accept incoming websocket connections if the client is at the specified origins.
 * AllowAll (not recommended) this will allow users to connect from any origin.
+* Hub contains the details for which hub to connect to.
 
 
 ### Current Features:
