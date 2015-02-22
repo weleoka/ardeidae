@@ -144,8 +144,6 @@ httpServer.listen(Config.port, function() {
 
 
 
-console.log(osFunctions.totalmem());
-console.log(osFunctions.cpus());
 /**
  *  HTTP make request and send stats to HUB.
  */
