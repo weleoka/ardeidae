@@ -31,6 +31,8 @@ Any peer connecting to the server with the custom client requires a web browser 
 ## Overview
 This package is the result of much work and is released as is. If anyone takes a look at the code, available on github, and sees any improvements then please let me know. This is my first node.js powered server/app package.
 
+The server aims to pass data processing to clients where plausable. For an example: the server will broadcast a message from a client to all clients (if it's not a private message), including the sending client. The client then gets the job of sorting out what isOwn message and what is not in order to avoid doubles. Question: what's more efficient, to avoid one server transmit or to check every client in sendTo array against the sending client... this remains unanswered for now.
+
 
 
 ## Installation

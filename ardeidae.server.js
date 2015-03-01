@@ -16,7 +16,7 @@ var DbManager = require('./lib/ardeidae').dbManager;
 var Utilities = require('./lib/ardeidae').utilities;
 var Config = require('./lib/ardeidae').config;
 
-// Read information from config file... mostly done within functions to limit globals.
+// Read information from config file... mostly done directly where needed.
 var ProtectedServer = Config.ProtectedServer;
 
 
@@ -92,7 +92,7 @@ function saveNewUser (details, callback) {
 }
 
 
-// DbManager be required by the incoming CLI parameters so start it here.
+// DbManager is required by the incoming CLI parameters so start it here.
 var DbManager = new DbManager(Config.dbDetails, Config.dbDetailsTable);
 
 
@@ -131,6 +131,10 @@ var HttpControl = new HttpControl(Config, ProtectedServer);
 
 
 /**
+ *  HTTP
+ * ===============================================
+ */
+ /**
  *  HTTP Server
  */
 var httpServer = http.createServer(function (request, response) {
@@ -191,18 +195,11 @@ setInterval( reportToHub, Config.hub.reportingInterval );
 
 
 
-
-
-
-
-
-
-
-
- /**
-  *  Create an object for the websocket. (Incoming WS requests handled at bottom of this file).
-  * https://github.com/Worlize/WebSocket-Node/wiki/Documentation
-  */
+/**
+  *  Create an object for the websocket. (Incoming WS requests routed at bottom of this file).
+  *   https://github.com/Worlize/WebSocket-Node/wiki/Documentation
+ * ===============================================
+ */
 var wsServer = new WebSocketServer({  httpServer: httpServer,  autoAcceptConnections: false });
 // Generate the protocols for websocket and wsSystem
 var BroadcastProtocol = Broadcaster.setBroadcastProtocol ();
@@ -258,11 +255,12 @@ function acceptConnectionAsBroadcast(request) {
               );
               LogKeeper.saveRegularMessage( peerID, peerName, peerOrigin,  msg.message );
             }
+
     // Private messaging handler
             if ( msg.reciever ) {
               var reciever = msg.reciever;
               var privateMsg = MsgControl.preparePrivateEcho( peerName, msg.message );
-    // If user not in reciever array, push.
+    // If user not in private reciever array, push.
               console.log('PEER: ' + peerID + ' Array: ' + reciever);
               if ( Utilities.isNotInArray(peerID, reciever) ) {
                 reciever.push(peerID);
