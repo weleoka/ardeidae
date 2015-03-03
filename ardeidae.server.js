@@ -131,11 +131,8 @@ var HttpControl = new HttpControl(Config, ProtectedServer);
 
 
 /**
- *  HTTP
+ *  HTTP Connection setup.
  * ===============================================
- */
- /**
- *  HTTP Server
  */
 var httpServer = http.createServer(function (request, response) {
   HttpControl.handleHttpRequest( request, response );

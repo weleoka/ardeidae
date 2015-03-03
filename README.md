@@ -31,8 +31,6 @@ Any peer connecting to the server with the custom client requires a web browser 
 ## Overview
 This package is the result of much work and is released as is. If anyone takes a look at the code, available on github, and sees any improvements then please let me know. This is my first node.js powered server/app package.
 
-The server aims to pass data processing to clients where plausable. For an example: the server will broadcast a message from a client to all clients (if it's not a private message), including the sending client. The client then gets the job of sorting out what isOwn message and what is not in order to avoid doubles. Question: what's more efficient, to avoid one server transmit or to check every client in sendTo array against the sending client... this remains unanswered for now.
-
 
 
 ## Installation
@@ -107,7 +105,7 @@ General functinality:
 	- Number of online peers.
 	- Server uptime.
 	- Total logins since deployment.
-* On set interval reports current stats to ardeidae Hub.
+* On a set interval reports current stats to ardeidae Hub.
 
 
 General server specs and options:
@@ -136,17 +134,19 @@ Functionality:
 
 Specs and options:
 
-* Needs a mode switching capability for verbose mode & debug mode.
+* Needs a mode switching capability for normal vs. verbose/debug mode, in respect to the teminal window logging.
+* Capability to write a log; either to file, database server, or to both.
 
 
 Security:
 
-* The servers protocols are not generated as they should be. They are simply made using a Math.random() function... and random is not random when it comes to computers.
+* The servers protocols are not generated as they should be. They are simply made using a Math.random() function.
+* Needs oversight of filtering applied to email, username and password data. DTAD (Don't Trust Any Data) from clients.
 
 
 Code, style and performance:
 
-* not formulated.
+* The server will broadast to all addresses in the peersArray, including the one who sent the message. This is probably a waste of resources, but also a source of comfort as the client knows that their messages has reached, and been processed by the server.
 
 
 ## Contributing
