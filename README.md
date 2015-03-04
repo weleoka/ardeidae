@@ -3,10 +3,12 @@ Messaging Server powered by Node.js and using Websockets.
 
 [Ardeidae homepage](http://www.student.bth.se/~kawe14/javascript/kmom10/webroot/index.php).
 
+This server is by default set up to report to a hub on a set interval. The hub can be seen as a DNS-server for Ardeidae chat-servers so that clients can find them.
+
 
 
 ## Ardeidae Server versions
-v1.3.0 (current)
+v1.3.1 (current)
 
 (Note to author:
 version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git, and homepage.)
@@ -89,7 +91,7 @@ All variables are specified within the config file, that is the place to edit se
 ### Current Features:
 General functinality:
 
-* Server config file.
+* Configurations file.
 * Message logging.
 * Private messaging to single or multiple peers but remaining in public room.
 * Filter messages with htmlEntities.
@@ -105,7 +107,7 @@ General functinality:
 	- Number of online peers.
 	- Server uptime.
 	- Total logins since deployment.
-* On a set interval reports current stats to ardeidae Hub.
+* Reports current stats to ardeidae Hub.
 
 
 General server specs and options:
@@ -129,7 +131,6 @@ Functionality:
 * Consider the format for saving message log. JSON or Object?
 * Needs multiple chattrooms... curently, one instance of the server equals one chattroom.
 * Backup message log to database table (currently stored in array), but at intervals - to free up system memory and provide backup during service down time.
-* Stop users sending blank messages.
 
 
 Specs and options:
@@ -147,6 +148,7 @@ Security:
 Code, style and performance:
 
 * The server will broadast to all addresses in the peersArray, including the one who sent the message. This is probably a waste of resources, but also a source of comfort as the client knows that their messages has reached, and been processed by the server.
+* The server reports to the hub on a set interval using a HTTP over TCP connection. A straight UDP system, more like DNS should suffice.
 
 
 ## Contributing

@@ -15,7 +15,15 @@ v1.2.1
 v1.2.2
 v1.2.3
 v1.3.0
+v1.3.1
 
+
+
+Version 1.3.1
+-------------
+*Released 2015-03-04*
+- Code and comments oversight.
+- Blank messages on broadcast socket not processed by server.
 
 
 Version 1.3.0

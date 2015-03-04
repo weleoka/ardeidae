@@ -222,7 +222,7 @@ function acceptConnectionAsBroadcast(request) {
   HttpControl.historicalUsers++;
   UsrControl.addNewUser( connection.broadcastId, request.origin );
 
-// Say hi, and transmit historical messages to new user.
+// Say hi, and transmit recent messages to new user.
   connection.sendUTF(
           MsgControl.prepareServerGeneralMsg('---> Welcome to the Ardeidae server.')
   );
@@ -243,7 +243,12 @@ function acceptConnectionAsBroadcast(request) {
         if (incoming.type === 'utf8') {
             msg = JSON.parse(incoming.utf8Data);
 
-    // Regular messaging handler
+    // Empty message. Return on function, discarding message.
+            if ( msg.message.length === 0 ) {
+              return;
+            }
+
+    // Public message, no specific recievers specified.
             if ( !msg.reciever ) {
               Broadcaster.broadcastPeerRegularInfo(
                     MsgControl.prepareEcho(
@@ -253,11 +258,11 @@ function acceptConnectionAsBroadcast(request) {
               LogKeeper.saveRegularMessage( peerID, peerName, peerOrigin,  msg.message );
             }
 
-    // Private messaging handler
+    // Private messaging, specific recievers.
             if ( msg.reciever ) {
               var reciever = msg.reciever;
               var privateMsg = MsgControl.preparePrivateEcho( peerName, msg.message );
-    // If user not in private reciever array, push.
+    // If sender not in private reciever array, push.
               console.log('PEER: ' + peerID + ' Array: ' + reciever);
               if ( Utilities.isNotInArray(peerID, reciever) ) {
                 reciever.push(peerID);
