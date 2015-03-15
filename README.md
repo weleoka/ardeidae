@@ -74,6 +74,15 @@ All variables are specified within the config file, that is the place to edit se
 
 
 ## Config-file
+* sysLogMode: specifies the logging mode:
+
+	- 0: debug (development) verbose and logfile messages to console.
+	- 1: standard (development) verbose to console, logfile to file.
+	- 2: logfile only messages (production)
+	- 3: No message display or logging (silent mode)
+
+* sysLogFile: path and file to write log to.
+* sysLogFileType: takes values 'text' or 'JSON'
 * port: specify the port which the http server is listening on.
 * serverCallsign: here you are free to call your server whatever you wish.
 * serverVersion: Do not change this value; it will have unforseen concequences for the clients.
@@ -89,7 +98,7 @@ All variables are specified within the config file, that is the place to edit se
 
 
 ### Current Features:
-General functinality:
+General functionality:
 
 * Configurations file.
 * Message logging.
@@ -113,6 +122,8 @@ General functinality:
 General server specs and options:
 
 * Displays output on host machine terminal about operations.
+* Has modes for logging or displaying output on host machine terminal about operations.
+* Writes entries to logfile in text or JSON format.
 
 
 Also about the protected server mode:
@@ -127,6 +138,7 @@ Also about the protected server mode:
 ### Known Issues/Missing Features:
 Functionality:
 
+* If HTTP request without relevant GET parameters then serve static HTML file.
 * Needs a function to notify peers when user is typing a message.
 * Consider the format for saving message log. JSON or Object?
 * Needs multiple chattrooms... curently, one instance of the server equals one chattroom.
@@ -135,8 +147,7 @@ Functionality:
 
 Specs and options:
 
-* Needs a mode switching capability for normal vs. verbose/debug mode, in respect to the teminal window logging.
-* Capability to write a log; either to file, database server, or to both.
+* Capability to write a log to database server.
 
 
 Security:
@@ -147,7 +158,7 @@ Security:
 
 Code, style and performance:
 
-* The server will broadast to all addresses in the peersArray, including the one who sent the message. This is probably a waste of resources, but also a source of comfort as the client knows that their messages has reached, and been processed by the server.
+* The server will broadast to all addresses in the peersArray, including the one who sent the message. This is probably a waste of resources, but also a source of comfort as the client knows that their message has reached, and been processed by the server.
 * The server reports to the hub on a set interval using a HTTP over TCP connection. A straight UDP system, more like DNS should suffice.
 
 
@@ -155,6 +166,8 @@ Code, style and performance:
 If you'd like to contribute to Ardeidae's development, start by forking the GitHub repo:
 
 https://github.com/weleoka/ardeidae.git
+
+Have a look at the known issues and missing features and take a pick or find something else that needs doing.
 
 The best way to get your changes merged is as follows:
 

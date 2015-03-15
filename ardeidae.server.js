@@ -2,6 +2,7 @@
 
 // Require the module dependencies.
 var osFunctions = require('os');
+var fs = require('fs');
 var http = require('http');
 var WebSocketServer = require('websocket').server;
 var password = require('password-hash-and-salt');
@@ -11,6 +12,7 @@ var HttpControl = require('./lib/ardeidae').httpControl;
 var UsrControl = require('./lib/ardeidae').usrControl;
 var MsgControl = require('./lib/ardeidae').msgControl;
 var Broadcaster = require('./lib/ardeidae').broadcaster;
+var SysLog = require('./lib/ardeidae').sysLog;
 var LogKeeper = require('./lib/ardeidae').logKeeper;
 var DbManager = require('./lib/ardeidae').dbManager;
 var Utilities = require('./lib/ardeidae').utilities;
@@ -94,6 +96,7 @@ function saveNewUser (details, callback) {
 
 // DbManager is required by the incoming CLI parameters so start it here.
 var DbManager = new DbManager(Config.dbDetails, Config.dbDetailsTable);
+var SysLog = new SysLog(Config, Utilities, fs);
 
 
 
