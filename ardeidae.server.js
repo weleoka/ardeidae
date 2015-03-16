@@ -93,10 +93,11 @@ function saveNewUser (details, callback) {
   }
 }
 
-
-// DbManager is required by the incoming CLI parameters so start it here.
-var DbManager = new DbManager(Config.dbDetails, Config.dbDetailsTable);
+// All other modules need to be passed the sysLog object.
 var SysLog = new SysLog(Config, Utilities, fs);
+// DbManager is required by the incoming CLI parameters so start it here.
+var DbManager = new DbManager(SysLog, Config.dbDetails, Config.dbDetailsTable);
+
 
 
 
