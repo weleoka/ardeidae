@@ -28,7 +28,6 @@ var ProtectedServer = Config.ProtectedServer;
  */
 function isSystemMsg(userId, msg) {
   if ( msg.lead === 'init' ) {
-     console.log('SYS:init recieved...');
      UsrControl.setNameAtIndex(msg.name, userId);
      return true;
   }
@@ -36,14 +35,12 @@ function isSystemMsg(userId, msg) {
     return true;
   }
   if ( msg.lead === 'stat' ) {
-    console.log('SYS:stat recieved.');
     Broadcaster.broadcastServerSystemInfo(
             UsrControl.getStats()
     );
     return true;
   }
   if ( msg.lead === 'hist' ) {
-    console.log('SYS.hist recieved.');
     Broadcaster.broadcastServerSystemInfo(
             UsrControl.getHistory()
     );
@@ -100,7 +97,6 @@ var DbManager = new DbManager(SysLog, Config.dbDetails, Config.dbDetailsTable);
 
 
 
-
 /**
  *  Handle the incoming CLI paramenters
  */
@@ -108,16 +104,18 @@ var DbManager = new DbManager(SysLog, Config.dbDetails, Config.dbDetailsTable);
  // console.log('myArgs: ', myArgs);
  switch (myArgs[0]) {
    case 'private':
-     console.log( '\nArdeidae server ' + '(v' + Config.serverVersion + ') in private/protected mode.\n============================================');
+     SysLog.console( '\nArdeidae (v' + Config.serverVersion + ') in private/protected mode.\n============================================');
+     SysLog.file( 'Ardeidae (v' + Config.serverVersion + ') started on ' + osFunctions.hostname() + ', port ' + Config.port);
      var ProtectedServer = true;
      break;
    case 'setup':
-     console.log(myArgs[0], ': Creating the database table.');
+     SysLog.console(myArgs[0], ': Creating the database table.');
      DbManager.createTableifNotExists();
      DbManager.executeSQL([], function () { process.exit(0); });
      break;
    default:
-     console.log( '\nArdeidae server ' + '(v' + Config.serverVersion + ') in default mode.\n====================================');
+     SysLog.console( '\nArdeidae (v' + Config.serverVersion + ') in default mode.\n====================================');
+     SysLog.file( 'Ardeidae (v' + Config.serverVersion + ') started on ' + osFunctions.hostname() + ', port ' + Config.port);
  }
 
 
@@ -143,8 +141,7 @@ var httpServer = http.createServer(function (request, response) {
 });
 
 httpServer.listen(Config.port, function() {
-  console.log( Utilities.getUtcNow ('full') +
-    ': Listening on port ' + Config.port + ' domain: ' + osFunctions.hostname() );
+  SysLog.console( 'Listening on port ' + Config.port + ' domain: ' + osFunctions.hostname() );
 });
 
 
@@ -213,7 +210,6 @@ var SystemProtocol = Broadcaster.setSystemProtocol ();
  * ====================================================
  */
 function acceptConnectionAsBroadcast(request) {
-  console.log('Protocol OK, accept BROADCAST connection...');
   var connection = request.accept(BroadcastProtocol, request.origin);
   // Get history from log before adding the new peer.
   var log = LogKeeper.retrieveRegularMessage(7);
@@ -221,7 +217,7 @@ function acceptConnectionAsBroadcast(request) {
   connection.broadcastId = UsrControl.getArrayLength();
   // Log the connection to broadcast array.
   Broadcaster.addPeer(connection);
-  console.log( Utilities.getUtcNow ('time') + ': BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
+  SysLog.file( 'BROADCAST connection accepted from ' + request.origin + ' id = ' + connection.broadcastId);
   HttpControl.onlineUsers++;
   HttpControl.historicalUsers++;
   UsrControl.addNewUser( connection.broadcastId, request.origin );
@@ -267,7 +263,6 @@ function acceptConnectionAsBroadcast(request) {
               var reciever = msg.reciever;
               var privateMsg = MsgControl.preparePrivateEcho( peerName, msg.message );
     // If sender not in private reciever array, push.
-              console.log('PEER: ' + peerID + ' Array: ' + reciever);
               if ( Utilities.isNotInArray(peerID, reciever) ) {
                 reciever.push(peerID);
               }
@@ -309,16 +304,16 @@ function acceptConnectionAsBroadcast(request) {
  * ====================================================
  */
 function acceptConnectionAsSystem(request) {
-  console.log('Protocol OK, accept SYSTEM connection...');
+  SysLog.console('Protocol OK, accept SYSTEM connection...');
   var sysConnection = request.accept(SystemProtocol, request.origin);
   // Account for the initial user created on the formation of broadcast connection.
   sysConnection.broadcastId = UsrControl.getArrayLength() -1;
    // Log the connection to server broadcasts array.
   Broadcaster.addSystemPeer(sysConnection);
-  console.log( Utilities.getUtcNow ('time') + ': SYSTEM connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
+  SysLog.file( 'SYSTEM connection accepted from ' + request.origin + ' id = ' + sysConnection.broadcastId);
 
   sysConnection.on('message', function(message) {
-     console.log('Recieved system message: ' + message.utf8Data + '... passing to handler.');
+     SysLog.console('Recieved system message: ' + message.utf8Data + '... passing to handler.');
      var msg = JSON.parse(message.utf8Data);
      if ( isSystemMsg( sysConnection.broadcastId, msg ) ) {
           // Get name from message, prepare info message and broadcast.
@@ -340,8 +335,7 @@ function acceptConnectionAsSystem(request) {
   });
 
   sysConnection.on('close', function(reasonCode, description) {
-    console.log( Utilities.getUtcNow ('time')
-                      + ': Peer ' + sysConnection.remoteAddress
+    SysLog.file( 'Peer ' + sysConnection.remoteAddress
                       + ' Broadcastid = ' + sysConnection.broadcastId
                       + ' disconnected from SYSTEM. Because: ' + reasonCode
                       + ' Description: ' + description);
@@ -357,12 +351,12 @@ function acceptConnectionAsSystem(request) {
  * ====================================================
  */
 function acceptConnectionAsLogin (request) {
-  console.log('Protocol OK, accepting LOGON connection...');
+  SysLog.console('Protocol OK, accepting LOGON connection...');
   var pswdConnection = request.accept('login-protocol', request.origin);
-  console.log( Utilities.getUtcNow ('time') + ': LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
+  SysLog.file( 'LOGIN connection accepted from ' + request.origin + ' id = ' + pswdConnection.broadcastId);
 
   pswdConnection.on('message', function(message) {
-     console.log('Recieved system login message: ' + message.utf8Data + '... passing to handler.');
+     SysLog.console('Recieved system login message: ' + message.utf8Data + '... passing to handler.');
      var msg = JSON.parse(message.utf8Data);
 
      if ( ProtectedServer ) {
@@ -415,8 +409,7 @@ function acceptConnectionAsLogin (request) {
   });
 
   pswdConnection.on('close', function(reasonCode, description) {
-    console.log( Utilities.getUtcNow ('time')
-                      + ': Peer ' + pswdConnection.remoteAddress
+    SysLog.file( 'Peer ' + pswdConnection.remoteAddress
                       + ' Broadcastid = ' + pswdConnection.broadcastId
                       + ' disconnected from LOGIN. Because: ' + reasonCode
                       + ' Description: ' + description);
@@ -436,12 +429,12 @@ wsServer.on('request', function(request) {
 // Make sure we only accept requests from an allowed origin
   if ( !Utilities.originIsAllowed(request.origin, Config.origins) ) {
     request.reject();
-    console.log( Utilities.getUtcNow ('time')  + ': Connection from origin ' + request.origin + ' rejected.');
+    SysLog.console( 'Connection from origin ' + request.origin + ' rejected.');
     return;
   }
 
   for ( i = 0; i < request.requestedProtocols.length; i++ ) {
-    console.log('\nREQUEST RECIEVED, testing protocols: "' + BroadcastProtocol + '" and "' + SystemProtocol + '" on server, Vs. "' + request.requestedProtocols[i] + '" from client.' );
+    SysLog.console('\nREQUEST RECIEVED, testing protocols: "' + BroadcastProtocol + '" and "' + SystemProtocol + '" on server, Vs. "' + request.requestedProtocols[i] + '" from client.' );
     if ( request.requestedProtocols[i] === 'login-protocol' ) {
         status = acceptConnectionAsLogin(request);
     } if ( request.requestedProtocols[i] === BroadcastProtocol ) {
@@ -455,7 +448,7 @@ wsServer.on('request', function(request) {
 
   // Unsupported protocol.
   if (!status) {
-    console.log('Subprotocol not supported');
+    SysLog.console('Subprotocol not supported');
     request.reject(404, 'Subprotocol not supported');
   }
 });
