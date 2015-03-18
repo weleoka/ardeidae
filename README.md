@@ -8,7 +8,7 @@ This server is by default set up to report to a hub on a set interval. The hub c
 
 
 ## Ardeidae Server versions
-v1.3.1 (current)
+v1.3.2 (current)
 
 (Note to author:
 version specified in package.json, readme.md, changelog.md, lib/ardedae.js, config.js and git, and homepage.)
@@ -160,6 +160,7 @@ Code, style and performance:
 
 * The server will broadast to all addresses in the peersArray, including the one who sent the message. This is probably a waste of resources, but also a source of comfort as the client knows that their message has reached, and been processed by the server.
 * The server reports to the hub on a set interval using a HTTP over TCP connection. A straight UDP system, more like DNS should suffice.
+* Utilities, SysLogger, DbManager should be split off from Ardeidae server & hub and be maintained as independent modules... "Ardeidae dependencies"?
 
 
 ## Contributing

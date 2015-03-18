@@ -105,7 +105,7 @@ var DbManager = new DbManager(SysLog, Config.dbDetails, Config.dbDetailsTable);
  switch (myArgs[0]) {
    case 'private':
      SysLog.console( '\nArdeidae (v' + Config.serverVersion + ') in private/protected mode.\n============================================');
-     SysLog.file( 'Ardeidae (v' + Config.serverVersion + ') started on ' + osFunctions.hostname() + ', port ' + Config.port);
+     SysLog.file( 'Ardeidae (v' + Config.serverVersion + ') started on ' + osFunctions.hostname() + ', port ' + Config.port + '(private mode)');
      var ProtectedServer = true;
      break;
    case 'setup':
@@ -115,7 +115,7 @@ var DbManager = new DbManager(SysLog, Config.dbDetails, Config.dbDetailsTable);
      break;
    default:
      SysLog.console( '\nArdeidae (v' + Config.serverVersion + ') in default mode.\n====================================');
-     SysLog.file( 'Ardeidae (v' + Config.serverVersion + ') started on ' + osFunctions.hostname() + ', port ' + Config.port);
+     SysLog.file( 'Ardeidae (v' + Config.serverVersion + ') started on ' + osFunctions.hostname() + ', port ' + Config.port + '(open mode)');
  }
 
 
@@ -123,11 +123,11 @@ var DbManager = new DbManager(SysLog, Config.dbDetails, Config.dbDetailsTable);
 /**
  *  Start up all things Ardeidae.
  */
-var UsrControl = new UsrControl();
-var MsgControl = new MsgControl();
-var Broadcaster = new Broadcaster(Config.protocol, ProtectedServer);
-var LogKeeper = new LogKeeper();
-var HttpControl = new HttpControl(Config, ProtectedServer);
+var UsrControl = new UsrControl(SysLog);
+var MsgControl = new MsgControl(SysLog);
+var Broadcaster = new Broadcaster(SysLog, Config.protocol, ProtectedServer);
+var LogKeeper = new LogKeeper(SysLog);
+var HttpControl = new HttpControl(SysLog, Config, ProtectedServer);
 // var DbManager = new DbManager(Config.dbDetails); // DbManager is started before handling CLI parameters.
 
 
@@ -160,7 +160,11 @@ var roo = 0;
 var stopMsgRepeat = function (message) {
   var msg = message || 0;
   if ( roo === msg ) { return msg; }
-  if ( roo !== msg ) { console.log(msg); return msg; }
+  if ( roo !== msg ) {
+    SysLog.console(msg);
+    SysLog.file(msg);
+    return msg;
+  }
 };
 
 var reportToHub = function() {
@@ -171,12 +175,19 @@ var reportToHub = function() {
     };
 
     var post_req = http.request(options, function(res) {
+        var responseBodyBuffer = [];
+        var recievedData;
+
         res.setEncoding('utf8');
         res.on('data', function (chunk) {
-            var responseBodyBuffer = [];
             roo = stopMsgRepeat('Connected to HUB.');
             responseBodyBuffer.push( chunk );
-            HttpControl.setHubId ( JSON.parse( responseBodyBuffer ) );
+            try {
+                recievedData =  JSON.parse( responseBodyBuffer[0] );
+            } catch (err) {
+                SysLog.file('fault_in_json: ' + err);
+            }
+            HttpControl.setHubId ( recievedData );
         });
     });
 
@@ -455,7 +466,7 @@ wsServer.on('request', function(request) {
 
 
 // The "exit" event is sent before Node exits.
-process.on("exit", function() { console.log("Goodbye"); });
+process.on("exit", function() { SysLog.file('Server shut down'); });
 // Uncaught exceptions generate events, if any handlers are registered.
 // Otherwise, the exception just makes Node print an error and exit.
 //process.on("uncaughtException", function(e) { console.log(Exception, e); });

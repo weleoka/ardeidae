@@ -16,8 +16,15 @@ v1.2.2
 v1.2.3
 v1.3.0
 v1.3.1
+v1.3.2
 
 
+Version 1.3.2
+-------------
+*Released 2015-03-18*
+- System logger writing to file or host machine. (SysLog module)
+- Server can be run in development or production mode.
+- Try catch on JSON parse.
 
 Version 1.3.1
 -------------
