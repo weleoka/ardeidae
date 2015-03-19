@@ -1,6 +1,6 @@
 {
   "name": "ardeidae",
-  "version": "1.3.0",
+  "version": "1.3.2",
   "description": "Messaging server supporting logging, and private messaging.",
   "main": "index.js",
   "directories": {

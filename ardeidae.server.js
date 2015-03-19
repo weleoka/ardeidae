@@ -79,6 +79,7 @@ function saveNewUser (details, callback) {
       password(details.password).hash(function(error, hash) {
           if (error) {
             throw new Error('Something went wrong with hashing password!');
+            SysLog.file('Error in hashing password.', 'ERR')
           }
           var params = [ details.name, details.email, hash, created ];
           DbManager.executeSQL(params, function (results) {
@@ -109,7 +110,7 @@ var DbManager = new DbManager(SysLog, Config.dbDetails, Config.dbDetailsTable);
      var ProtectedServer = true;
      break;
    case 'setup':
-     SysLog.console(myArgs[0], ': Creating the database table.');
+     SysLog.console('Creating the database table.');
      DbManager.createTableifNotExists();
      DbManager.executeSQL([], function () { process.exit(0); });
      break;
