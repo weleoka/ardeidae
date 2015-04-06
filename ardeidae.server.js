@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 /*globals Exception */
 
 // Require the module dependencies.
